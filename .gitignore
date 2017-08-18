@@ -31,3 +31,7 @@ junit*.properties
 
 ## Maven Target folder
 target/
+
+# Gradle:
+.idea/gradle.xml
+.idea/libraries
