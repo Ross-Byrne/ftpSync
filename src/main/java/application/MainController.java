@@ -12,7 +12,9 @@ import org.apache.commons.net.ftp.FTPFile;
 import org.apache.commons.net.ftp.FTPReply;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.net.InetAddress;
 import java.net.URL;
 import java.util.ResourceBundle;
@@ -33,6 +35,7 @@ public class MainController implements Initializable {
     FTPClient client = new FTPClient();
     InetAddress address;
     File outputDir = new File("downloadedFiles");
+    OutputStream outStream;
 
 
     public void initialize(URL location, ResourceBundle resources) {
@@ -156,6 +159,9 @@ public class MainController implements Initializable {
                     for (String name : names) {
                         System.out.println("Name = " + name);
                         fileTreeView.getRoot().getChildren().add(new TreeItem<>(name));
+                        outStream = new FileOutputStream(outputDir.getName() + File.separator + name);
+                        client.retrieveFile("/" + name, outStream);
+
                     }
                 } // if
 
@@ -168,8 +174,11 @@ public class MainController implements Initializable {
 
                 try {
 
-                    // error, disconnect client
+                    // disconnect client
                     client.disconnect();
+
+                    // close outStream
+                    outStream.close();
 
                     System.out.println("Disconnecting");
 
