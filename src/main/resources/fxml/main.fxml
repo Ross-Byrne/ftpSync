@@ -10,6 +10,12 @@
 
 <AnchorPane minHeight="600.0" minWidth="600.0" prefHeight="600.0" prefWidth="800.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="application.MainController">
    <children>
-      <TreeView fx:id="fileTreeView" layoutX="68.0" layoutY="38.0" prefHeight="296.0" prefWidth="200.0" />
+      <TreeView fx:id="fileTreeView" layoutX="287.0" layoutY="49.0" prefHeight="342.0" prefWidth="438.0" />
+      <TextField fx:id="addressTF" layoutX="39.0" layoutY="53.0" />
+      <TextField fx:id="usernameTF" layoutX="38.0" layoutY="113.0" />
+      <Label layoutX="40.0" layoutY="27.0" prefHeight="25.0" prefWidth="171.0" text="Server Address:" />
+      <Label layoutX="39.0" layoutY="88.0" prefHeight="25.0" prefWidth="171.0" text="Username:" />
+      <Label layoutX="39.0" layoutY="147.0" prefHeight="25.0" prefWidth="171.0" text="Password:" />
+      <PasswordField fx:id="passwordPF" layoutX="39.0" layoutY="172.0" />
    </children>
 </AnchorPane>
