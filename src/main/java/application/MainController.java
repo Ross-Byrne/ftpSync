@@ -50,6 +50,11 @@ public class MainController implements Initializable {
         // set the tree root
         fileTreeView.setRoot(rootItem);
 
+        // set the login details to make testing faster
+        addressTF.setText("localhost");
+        usernameTF.setText("bob");
+        passwordPF.setText("qwerty");
+
 
        //ftpTest();
     } // initialize()
@@ -153,14 +158,18 @@ public class MainController implements Initializable {
                     // Obtain a list of filenames in the current working
                     // directory. When no file found an empty array will
                     // be returned.
-                    String[] names = client.listNames();
+                    FTPFile[] files = client.listFiles();
 
                     //System.out.println("No of files: " + names.length);
-                    for (String name : names) {
-                        System.out.println("Name = " + name);
-                        fileTreeView.getRoot().getChildren().add(new TreeItem<>(name));
-                        outStream = new FileOutputStream(outputDir.getName() + File.separator + name);
-                        client.retrieveFile("/" + name, outStream);
+                    for (FTPFile file : files) {
+                        System.out.println("Name = " + file.getName());
+                        fileTreeView.getRoot().getChildren().add(new TreeItem<>(file.getName()));
+
+                        if(file.isDirectory()){
+                            System.out.println("Is Directory");
+                        }
+                        outStream = new FileOutputStream(outputDir.getName() + File.separator + file.getName());
+                        client.retrieveFile("/" + file.getName(), outStream);
 
                     }
                 } // if
