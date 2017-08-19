@@ -155,23 +155,40 @@ public class MainController implements Initializable {
 
                     // get files
 
-                    // Obtain a list of filenames in the current working
-                    // directory. When no file found an empty array will
-                    // be returned.
                     FTPFile[] files = client.listFiles();
 
                     //System.out.println("No of files: " + names.length);
                     for (FTPFile file : files) {
+
                         System.out.println("Name = " + file.getName());
+
+                        // add file to file tree
                         fileTreeView.getRoot().getChildren().add(new TreeItem<>(file.getName()));
+
+                    } // for
+
+                    // download the files
+
+                    System.out.println("Downloading files");
+
+                    for (FTPFile file : files) {
+
+                        System.out.println("Downloading: " + file.getName());
 
                         if(file.isDirectory()){
                             System.out.println("Is Directory");
                         }
+
+                        // create outputStream for file
                         outStream = new FileOutputStream(outputDir.getName() + File.separator + file.getName());
+
+                        // retrieve the files
                         client.retrieveFile("/" + file.getName(), outStream);
 
-                    }
+                    } // for
+
+                    System.out.println("Finished downloading files");
+
                 } // if
 
             }catch (Exception e){
