@@ -1,4 +1,4 @@
-package main;
+package application;
 
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
@@ -11,7 +11,7 @@ public class Main extends Application {
 
     public void start(Stage primaryStage) throws Exception{
 
-        Parent root = FXMLLoader.load(getClass().getResource("main.fxml"));
+        Parent root = FXMLLoader.load(getClass().getResource("/fxml/main.fxml"));
         primaryStage.setTitle("ftp Sync");
         primaryStage.setScene(new Scene(root, 800, 600));
         primaryStage.setMinWidth(600);
