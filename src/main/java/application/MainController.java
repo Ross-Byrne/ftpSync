@@ -8,6 +8,7 @@ import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.stage.DirectoryChooser;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.net.ftp.FTPClient;
 import org.apache.commons.net.ftp.FTPFile;
@@ -19,6 +20,9 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.net.InetAddress;
 import java.net.URL;
+import java.time.chrono.ChronoPeriod;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 import java.util.ResourceBundle;
 
 public class MainController implements Initializable {
@@ -31,13 +35,17 @@ public class MainController implements Initializable {
     @FXML PasswordField passwordPF;
     @FXML Button loginBT;
     @FXML Label messageLB;
+    @FXML Button outputDirBT;
+    @FXML Label outputDirLB;
 
     // variables
 
     FTPClient client = new FTPClient();
     InetAddress address;
+    DirectoryChooser directoryChooser = new DirectoryChooser();
     File outputDir = new File("downloadedFiles");
     OutputStream outStream;
+
 
     private Image dirIcon = new Image(getClass().getResourceAsStream("/icons/directory_icon.png"));
 
@@ -47,7 +55,10 @@ public class MainController implements Initializable {
         // make the output directory
         outputDir.mkdir();
 
-        TreeItem<String> rootItem = new TreeItem<String> ("Root: /", new ImageView(dirIcon));
+        directoryChooser.setTitle("Select Download Location");
+
+
+        TreeItem<String> rootItem = new TreeItem<> ("Root: /", new ImageView(dirIcon));
         rootItem.setExpanded(true);
 
         // set the tree root
@@ -97,12 +108,21 @@ public class MainController implements Initializable {
             return;
         }
 
-        //System.out.println("Logging in with Username: " + usernameTF.getText() + " and Password: " + passwordPF.getText());
-
         // try login
         connectToServer(this.addressTF.getText(), this.usernameTF.getText(), this.passwordPF.getText());
 
     } // loginButtonClick()
+
+
+    @FXML void outputDirBT_OnAction(){
+
+        // open output directory chooser
+        outputDir = directoryChooser.showDialog(null);
+
+        // show selected folder
+        outputDirLB.setText(outputDir.getAbsolutePath());
+
+    } // outputDirBT_OnAction()
 
 
     private void connectToServer(String serverAddress, String username, String password){
@@ -199,7 +219,7 @@ public class MainController implements Initializable {
 
     } // connectToServer()
 
-
+    // builds the tree view of the files
     private void buildFileTree(TreeItem treeNode, FTPClient client, String path) throws Exception {
 
         // display the files
@@ -208,7 +228,7 @@ public class MainController implements Initializable {
         for (FTPFile file : files) {
 
             // add file to file tree
-            treeNode.getChildren().add(new TreeItem<>(file.getName()));
+            treeNode.getChildren().add(new TreeItem<>(file.getName() + " | " + file.getTimestamp().toInstant()));
 
         } // for
 
@@ -236,6 +256,45 @@ public class MainController implements Initializable {
         } // for
 
     } // buildFileTree()
+
+
+    // sync files, by download files that need to be downloaded
+    private void syncFiles(FTPClient client, String path) throws Exception {
+
+        // display the files
+        FTPFile[] files = client.listFiles(path, FTPFile::isFile);
+
+        for (FTPFile file : files) {
+
+            // add file to file tree
+            //treeNode.getChildren().add(new TreeItem<>(file.getName() + " | " + file.getTimestamp().toInstant()));
+
+        } // for
+
+        // get the directories
+        FTPFile[] directories = client.listDirectories(File.separator + path);
+
+        for (FTPFile dir : directories) {
+
+            if(!dir.getName().startsWith(".")) {
+                // create treeItem to represent new Directory
+                TreeItem newDir = new TreeItem<>(dir.getName(), new ImageView(dirIcon));
+
+                // add directory to file tree
+                //treeNode.getChildren().add(newDir);
+
+                // build path to new directory in server
+                String newPath = path + File.separator + dir.getName();
+
+                System.out.println("Discovering Files in: " + newPath);
+
+                // recursively call method to add files and directories to new directory
+                syncFiles(client, newPath);
+            }
+
+        } // for
+
+    } // syncFiles()
 
 
     public void ftpTest() {
