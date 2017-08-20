@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.net.InetAddress;
 import java.net.URL;
+import java.text.SimpleDateFormat;
 import java.time.chrono.ChronoPeriod;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
@@ -45,6 +46,7 @@ public class MainController implements Initializable {
     DirectoryChooser directoryChooser = new DirectoryChooser();
     File outputDir = new File("downloadedFiles");
     OutputStream outStream;
+    SimpleDateFormat ft = new SimpleDateFormat ("HH:mm:ss MMM d");
 
 
     private Image dirIcon = new Image(getClass().getResourceAsStream("/icons/directory_icon.png"));
@@ -188,9 +190,6 @@ public class MainController implements Initializable {
                     // disconnect client
                     client.disconnect();
 
-                    // close outStream
-                    //outStream.close();
-
                     System.out.println("Disconnecting");
 
                 } catch (IOException e) {
@@ -217,7 +216,7 @@ public class MainController implements Initializable {
         for (FTPFile file : files) {
 
             // add file to file tree
-            treeNode.getChildren().add(new TreeItem<>(file.getName() + " | " + file.getTimestamp().toInstant()));
+            treeNode.getChildren().add(new TreeItem<>(file.getName() + " | " + ft.format(file.getTimestamp().getTime())));
 
         } // for
 
@@ -263,6 +262,9 @@ public class MainController implements Initializable {
             // retrieve the files
             client.retrieveFile(path + file.getName(), outStream);
 
+            // close the stream
+            outStream.close();
+
         } // for
 
         // get the directories
@@ -279,74 +281,10 @@ public class MainController implements Initializable {
 
                 // recursively call method to add files and directories to new directory
                 syncFiles(client, newPath);
-            }
+            } // if
 
         } // for
 
     } // syncFiles()
-
-
-    public void ftpTest() {
-
-        String server = "localhost";
-
-
-
-        try {
-
-            address = InetAddress.getByName(server);
-
-            client.connect(address);
-            client.login("bob", "qwerty");
-
-            if (client.isConnected()) {
-
-                // enter passive mode
-                client.enterLocalPassiveMode();
-                //client.enterRemoteActiveMode(addr,3000);
-
-                System.out.println("Connected");
-
-                System.out.print(client.getReplyString());
-                FTPFile[] files = client.listFiles();
-
-                System.out.println("No of Files: " + files.length);
-
-                // Obtain a list of filenames in the current working
-                // directory. When no file found an empty array will
-                // be returned.
-                String[] names = client.listNames();
-
-                //System.out.println("No of files: " + names.length);
-                for (String name : names) {
-                    System.out.println("Name = " + name);
-                    fileTreeView.getRoot().getChildren().add(new TreeItem<>(name));
-                }
-
-                FTPFile[] ftpFiles = client.listFiles();
-
-
-                for (FTPFile ftpFile : ftpFiles) {
-                    // Check if FTPFile is a regular file
-                    if (ftpFile.getType() == FTPFile.FILE_TYPE) {
-                        System.out.printf("FTPFile: %s; %s; %s%n",
-                                ftpFile.getName(),
-                                FileUtils.byteCountToDisplaySize(ftpFile.getSize()),
-                                ftpFile.getTimestamp().getTime().toString());
-                    }
-                }
-            }
-            client.logout();
-        } catch (IOException e) {
-            System.out.println("Error: " + e.getMessage());
-        } finally {
-            try {
-                client.disconnect();
-            } catch (IOException e) {
-                //e.printStackTrace();
-                System.out.println("Error Disconnecting");
-            }
-        }
-    } // ftpTest()
 
 } // class
