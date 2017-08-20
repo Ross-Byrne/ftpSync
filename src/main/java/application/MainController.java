@@ -55,8 +55,6 @@ public class MainController implements Initializable {
         usernameTF.setText("bob");
         passwordPF.setText("qwerty");
 
-
-       //ftpTest();
     } // initialize()
 
     // onClick method for login button
@@ -155,15 +153,31 @@ public class MainController implements Initializable {
 
                     // get files
 
-                    FTPFile[] files = client.listFiles();
+                    FTPFile[] files = client.listFiles("", FTPFile::isFile);
 
                     //System.out.println("No of files: " + names.length);
                     for (FTPFile file : files) {
 
-                        System.out.println("Name = " + file.getName());
+                        System.out.println("File: " + file.getName());
 
                         // add file to file tree
                         fileTreeView.getRoot().getChildren().add(new TreeItem<>(file.getName()));
+
+                    } // for
+
+                    // get the directories
+                    FTPFile[] directories = client.listDirectories();
+
+                    for (FTPFile dir : directories) {
+
+                        System.out.println("Directory: " + dir.getName());
+
+                        if(dir.isDirectory()){
+                            System.out.println("Is Directory");
+                        }
+
+                        // add directory to file tree
+                        fileTreeView.getRoot().getChildren().add(new TreeItem<>(dir.getName()));
 
                     } // for
 
