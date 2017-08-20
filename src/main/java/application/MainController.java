@@ -21,9 +21,12 @@ import java.io.OutputStream;
 import java.net.InetAddress;
 import java.net.URL;
 import java.text.SimpleDateFormat;
+import java.time.Duration;
 import java.time.chrono.ChronoPeriod;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
+import java.time.temporal.Temporal;
+import java.util.Calendar;
 import java.util.ResourceBundle;
 
 public class MainController implements Initializable {
@@ -47,7 +50,7 @@ public class MainController implements Initializable {
     File outputDir = new File("downloadedFiles");
     OutputStream outStream;
     SimpleDateFormat ft = new SimpleDateFormat ("HH:mm:ss MMM d");
-
+    long daysLimit = 7;
 
     private Image dirIcon = new Image(getClass().getResourceAsStream("/icons/directory_icon.png"));
 
@@ -249,21 +252,32 @@ public class MainController implements Initializable {
     // sync files, by download files that need to be downloaded
     private void syncFiles(FTPClient client, String path) throws Exception {
 
+        long daysOld = 0;
+
         // display the files
         FTPFile[] files = client.listFiles(path, FTPFile::isFile);
 
         for (FTPFile file : files) {
 
-            System.out.println("Downloading: " + file.getName());
+            // get the number of days old this file is
+            daysOld = Duration.between(file.getTimestamp().toInstant(), Calendar.getInstance().toInstant()).toDays();
+            System.out.println("File is " + daysOld + " days old");
 
-            // create outputStream for file
-            outStream = new FileOutputStream(outputDir.getName() + File.separator + file.getName());
+            // if file is not older then limit
+            if(daysOld < daysLimit) {
 
-            // retrieve the files
-            client.retrieveFile(path + file.getName(), outStream);
+                System.out.println("Downloading: " + file.getName());
 
-            // close the stream
-            outStream.close();
+                // create outputStream for file
+                outStream = new FileOutputStream(outputDir.getName() + File.separator + file.getName());
+
+                // retrieve the files
+                client.retrieveFile(path + file.getName(), outStream);
+
+                // close the stream
+                outStream.close();
+
+            } // if
 
         } // for
 
