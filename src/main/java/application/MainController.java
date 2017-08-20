@@ -86,10 +86,26 @@ public class MainController implements Initializable {
             return;
         }
 
-        System.out.println("Logging in with Username: " + usernameTF.getText() + " and Password: " + passwordPF.getText());
+        //System.out.println("Logging in with Username: " + usernameTF.getText() + " and Password: " + passwordPF.getText());
 
+
+//       try {
+//
+//           new Thread(() -> {
+//               System.out.println("Starting server connecting thread.");
+//
         // try login
         connectToServer(this.addressTF.getText(), this.usernameTF.getText(), this.passwordPF.getText());
+//
+//               System.out.println("Server connecting thread Finished.");
+//
+//           }).start();
+//
+//       } catch (Exception e){
+//
+//           System.out.println(e.getMessage());
+//
+//       } // try
 
     } // loginButtonClick()
 
@@ -151,57 +167,61 @@ public class MainController implements Initializable {
                     // logged in ok
                     messageLB.setText(client.getReplyString());
 
+                    // display files
+                    buildFileTree(fileTreeView.getRoot(), client, "");
+
+
                     // get files
 
-                    FTPFile[] files = client.listFiles("", FTPFile::isFile);
-
-                    //System.out.println("No of files: " + names.length);
-                    for (FTPFile file : files) {
-
-                        System.out.println("File: " + file.getName());
-
-                        // add file to file tree
-                        fileTreeView.getRoot().getChildren().add(new TreeItem<>(file.getName()));
-
-                    } // for
-
-                    // get the directories
-                    FTPFile[] directories = client.listDirectories();
-
-                    for (FTPFile dir : directories) {
-
-                        System.out.println("Directory: " + dir.getName());
-
-                        if(dir.isDirectory()){
-                            System.out.println("Is Directory");
-                        }
-
-                        // add directory to file tree
-                        fileTreeView.getRoot().getChildren().add(new TreeItem<>(dir.getName()));
-
-                    } // for
+//                    FTPFile[] files = client.listFiles("", FTPFile::isFile);
+//
+//                    //System.out.println("No of files: " + names.length);
+//                    for (FTPFile file : files) {
+//
+//                        System.out.println("File: " + file.getName());
+//
+//                        // add file to file tree
+//                        fileTreeView.getRoot().getChildren().add(new TreeItem<>(file.getName()));
+//
+//                    } // for
+//
+//                    // get the directories
+//                    FTPFile[] directories = client.listDirectories("/");
+//
+//                    for (FTPFile dir : directories) {
+//
+//                        System.out.println("Directory: " + dir.getName());
+//
+//                        if(dir.isDirectory()){
+//                            System.out.println("Is Directory");
+//                        }
+//
+//                        // add directory to file tree
+//                        fileTreeView.getRoot().getChildren().add(new TreeItem<>(dir.getName()));
+//
+//                    } // for
 
                     // download the files
 
-                    System.out.println("Downloading files");
-
-                    for (FTPFile file : files) {
-
-                        System.out.println("Downloading: " + file.getName());
-
-                        if(file.isDirectory()){
-                            System.out.println("Is Directory");
-                        }
-
-                        // create outputStream for file
-                        outStream = new FileOutputStream(outputDir.getName() + File.separator + file.getName());
-
-                        // retrieve the files
-                        client.retrieveFile("/" + file.getName(), outStream);
-
-                    } // for
-
-                    System.out.println("Finished downloading files");
+//                    System.out.println("Downloading files");
+//
+//                    for (FTPFile file : files) {
+//
+//                        System.out.println("Downloading: " + file.getName());
+//
+//                        if(file.isDirectory()){
+//                            System.out.println("Is Directory");
+//                        }
+//
+//                        // create outputStream for file
+//                        outStream = new FileOutputStream(outputDir.getName() + File.separator + file.getName());
+//
+//                        // retrieve the files
+//                        client.retrieveFile("/" + file.getName(), outStream);
+//
+//                    } // for
+//
+//                    System.out.println("Finished downloading files");
 
                 } // if
 
@@ -218,7 +238,7 @@ public class MainController implements Initializable {
                     client.disconnect();
 
                     // close outStream
-                    outStream.close();
+                    //outStream.close();
 
                     System.out.println("Disconnecting");
 
@@ -226,12 +246,53 @@ public class MainController implements Initializable {
 
                     //e.printStackTrace();
                     System.out.println("Error Disconnecting");
-                } // try
+
+                } catch (Exception e){
+
+                    e.printStackTrace();
+                }
             } // try
 
         } // if
 
     } // connectToServer()
+
+
+    private void buildFileTree(TreeItem treeNode, FTPClient client, String path) throws Exception {
+
+        // display the files
+        FTPFile[] files = client.listFiles(path, FTPFile::isFile);
+
+        for (FTPFile file : files) {
+
+            // add file to file tree
+            treeNode.getChildren().add(new TreeItem<>(file.getName()));
+
+        } // for
+
+        // get the directories
+        FTPFile[] directories = client.listDirectories("/" + path);
+
+        for (FTPFile dir : directories) {
+
+            // create treeItem to represent new Directory
+            TreeItem newDir = new TreeItem<>(dir.getName());
+
+            // add directory to file tree
+            treeNode.getChildren().add(newDir);
+
+            // build path to new directory in server
+            String newPath = path + File.separator + dir.getName();
+
+            System.out.println("Discovering Files in: " + newPath);
+
+            // recursively call method to add files and directories to new directory
+            buildFileTree(newDir, client, newPath);
+
+        } // for
+
+    } // buildFileTree()
+
 
     public void ftpTest() {
 
