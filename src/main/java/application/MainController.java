@@ -55,9 +55,10 @@ public class MainController implements Initializable {
         // make the output directory
         outputDir.mkdir();
 
+        // set up directory chooser
         directoryChooser.setTitle("Select Download Location");
 
-
+        // set up file tree
         TreeItem<String> rootItem = new TreeItem<> ("Root: /", new ImageView(dirIcon));
         rootItem.setExpanded(true);
 
@@ -120,7 +121,9 @@ public class MainController implements Initializable {
         outputDir = directoryChooser.showDialog(null);
 
         // show selected folder
-        outputDirLB.setText(outputDir.getAbsolutePath());
+
+        if(outputDir != null)
+            outputDirLB.setText(outputDir.getAbsolutePath());
 
     } // outputDirBT_OnAction()
 
