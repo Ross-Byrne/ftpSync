@@ -29,14 +29,14 @@ public class MainController implements Initializable {
 
     // UI elements
 
-    @FXML TreeView<String> fileTreeView;
-    @FXML TextField addressTF;
-    @FXML TextField usernameTF;
-    @FXML PasswordField passwordPF;
-    @FXML Button loginBT;
-    @FXML Label messageLB;
-    @FXML Button outputDirBT;
-    @FXML Label outputDirLB;
+    @FXML private TreeView<String> fileTreeView;
+    @FXML private TextField addressTF;
+    @FXML private TextField usernameTF;
+    @FXML private PasswordField passwordPF;
+    @FXML private Button loginBT;
+    @FXML private Label messageLB;
+    @FXML private Button outputDirBT;
+    @FXML private Label outputDirLB;
 
     // variables
 
@@ -168,25 +168,11 @@ public class MainController implements Initializable {
 
                     // download the files
 
-//                    System.out.println("Downloading files");
-//
-//                    for (FTPFile file : files) {
-//
-//                        System.out.println("Downloading: " + file.getName());
-//
-//                        if(file.isDirectory()){
-//                            System.out.println("Is Directory");
-//                        }
-//
-//                        // create outputStream for file
-//                        outStream = new FileOutputStream(outputDir.getName() + File.separator + file.getName());
-//
-//                        // retrieve the files
-//                        client.retrieveFile("/" + file.getName(), outStream);
-//
-//                    } // for
-//
-//                    System.out.println("Finished downloading files");
+                    System.out.println("Starting to download files");
+
+                    syncFiles(client, "");
+
+                    System.out.println("Finished downloading files");
 
                 } // if
 
@@ -236,7 +222,7 @@ public class MainController implements Initializable {
         } // for
 
         // get the directories
-        FTPFile[] directories = client.listDirectories(File.separator + path);
+        FTPFile[] directories = client.listDirectories(path);
 
         for (FTPFile dir : directories) {
 
@@ -269,27 +255,27 @@ public class MainController implements Initializable {
 
         for (FTPFile file : files) {
 
-            // add file to file tree
-            //treeNode.getChildren().add(new TreeItem<>(file.getName() + " | " + file.getTimestamp().toInstant()));
+            System.out.println("Downloading: " + file.getName());
+
+            // create outputStream for file
+            outStream = new FileOutputStream(outputDir.getName() + File.separator + file.getName());
+
+            // retrieve the files
+            client.retrieveFile(path + file.getName(), outStream);
 
         } // for
 
         // get the directories
-        FTPFile[] directories = client.listDirectories(File.separator + path);
+        FTPFile[] directories = client.listDirectories(path);
 
         for (FTPFile dir : directories) {
 
             if(!dir.getName().startsWith(".")) {
-                // create treeItem to represent new Directory
-                TreeItem newDir = new TreeItem<>(dir.getName(), new ImageView(dirIcon));
-
-                // add directory to file tree
-                //treeNode.getChildren().add(newDir);
 
                 // build path to new directory in server
                 String newPath = path + File.separator + dir.getName();
 
-                System.out.println("Discovering Files in: " + newPath);
+                System.out.println("Downloading Files in: " + newPath);
 
                 // recursively call method to add files and directories to new directory
                 syncFiles(client, newPath);
