@@ -2,7 +2,7 @@
 
 A simple ftp file syncing program that will sync files of a specified age. Written in Java using JavaFX.
 
-Currently a work-in-progress.
+### Currently a work-in-progress.
 
 ## Setup
 
