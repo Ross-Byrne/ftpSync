@@ -1,4 +1,4 @@
-# ftpSync_JavaFX
+# ftp Sync
 
 A simple ftp file syncing program that will sync files of a specified age. Written in Java using JavaFX.
 
