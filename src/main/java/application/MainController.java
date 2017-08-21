@@ -80,14 +80,14 @@ public class MainController implements Initializable {
     // onClick method for login button
     @FXML void loginButtonClick_OnAction(){
 
-        //System.out.println("Login Click");
+        System.out.println("Login Click");
 
         // clear message label
-        messageLB.setText("");
+        messageLB.setText("Logging in...");
 
         // clear the file tree
 
-        TreeItem<String> rootItem = new TreeItem<String> ("Root: /", new ImageView(dirIcon));
+        TreeItem<String> rootItem = new TreeItem<> ("Root: /", new ImageView(dirIcon));
         rootItem.setExpanded(true);
 
         // set the tree root
@@ -184,13 +184,34 @@ public class MainController implements Initializable {
                     // display files
                     buildFileTree(fileTreeView.getRoot(), client, "");
 
-                    // download the files
+                    // download the files, in a separate thread
+                    new Thread(() -> {
 
-                    System.out.println("Starting to download files");
+                        System.out.println("Starting to download files");
 
-                    syncFiles(client, "");
+                        try {
 
-                    System.out.println("Finished downloading files");
+                            // sync the files
+                            syncFiles(client, "");
+
+                            // disconnect from the server
+                            disconnectServer();
+
+                        } catch (Exception ex){
+
+                            messageLB.setText("Error Downloading files!");
+
+                            // disconnect from the server
+                            disconnectServer();
+
+                            ex.printStackTrace();
+
+                            return;
+                        } // try
+
+                        System.out.println("Finished downloading files");
+
+                    }).start();
 
                 } // if
 
@@ -199,29 +220,34 @@ public class MainController implements Initializable {
                 System.out.println("Error: " + e.getMessage());
                 messageLB.setText("Error: " + e.getMessage());
 
-            } finally {
+                // disconnect the user from server
+                disconnectServer();
 
-                try {
-
-                    // disconnect client
-                    client.disconnect();
-
-                    System.out.println("Disconnecting");
-
-                } catch (IOException e) {
-
-                    //e.printStackTrace();
-                    System.out.println("Error Disconnecting");
-
-                } catch (Exception e){
-
-                    e.printStackTrace();
-                }
             } // try
-
         } // if
 
     } // connectToServer()
+
+
+    // disconnect the user form server
+    private void disconnectServer(){
+
+        try {
+
+            // disconnect client
+            client.disconnect();
+
+            System.out.println("Disconnecting");
+
+        } catch (Exception e) {
+
+            //e.printStackTrace();
+            System.out.println("Error Disconnecting");
+
+        } // try
+
+    } // disconnectServer()
+
 
     // builds the tree view of the files
     private void buildFileTree(TreeItem treeNode, FTPClient client, String path) throws Exception {
@@ -277,7 +303,7 @@ public class MainController implements Initializable {
             System.out.println("File is " + daysOld + " days old");
 
             // if file is not older then limit
-            if(daysOld < daysLimit) {
+            if (daysOld < daysLimit) {
 
                 System.out.println("Downloading: " + file.getName());
 
@@ -299,7 +325,7 @@ public class MainController implements Initializable {
 
         for (FTPFile dir : directories) {
 
-            if(!dir.getName().startsWith(".")) {
+            if (!dir.getName().startsWith(".")) {
 
                 // build path to new directory in server
                 String newPath = path + File.separator + dir.getName();
