@@ -74,7 +74,6 @@ public class MainController implements Initializable {
         // set the login details to make testing faster
         addressTF.setText("ftp.vaultfortress.net");
         usernameTF.setText("ross@vaultfortress.net");
-        passwordPF.setText("TopGun666");
 
     } // initialize()
 
