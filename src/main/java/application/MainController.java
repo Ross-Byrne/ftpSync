@@ -51,6 +51,7 @@ public class MainController implements Initializable {
     OutputStream outStream;
     SimpleDateFormat ft = new SimpleDateFormat ("HH:mm:ss MMM d");
     long daysLimit = 7;
+    boolean outputDirSelected;
 
     private Image dirIcon = new Image(getClass().getResourceAsStream("/icons/directory_icon.png"));
 
@@ -114,6 +115,13 @@ public class MainController implements Initializable {
             return;
         }
 
+        // make sure output directory is selected
+        if(outputDirSelected == false){
+
+            this.messageLB.setText("Please select an output directory for downloaded files.");
+            return;
+        }
+
         // try login
         connectToServer(this.addressTF.getText(), this.usernameTF.getText(), this.passwordPF.getText());
 
@@ -127,8 +135,14 @@ public class MainController implements Initializable {
 
         // show selected folder
 
-        if(outputDir != null)
+        if(outputDir != null) {
+
+            // flag as directory selected
+            outputDirSelected = true;
+
+            // display output location
             outputDirLB.setText(outputDir.getAbsolutePath());
+        } // if
 
     } // outputDirBT_OnAction()
 
