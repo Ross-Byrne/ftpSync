@@ -187,7 +187,7 @@ public class MainController implements Initializable {
                     logTA.appendText("\n" + client.getReplyString());
 
                     // display files
-                    buildFileTree(fileTreeView.getRoot(), client, "");
+                    buildFileTree(fileTreeView.getRoot(), client);
 
                     // download the files, in a separate thread
                     new Thread(() -> {
@@ -197,7 +197,7 @@ public class MainController implements Initializable {
                         try {
 
                             // sync the files
-                            syncFiles(client, "");
+                            syncFiles(client);
 
                             // disconnect from the server
                             disconnectServer();
@@ -255,39 +255,57 @@ public class MainController implements Initializable {
     } // disconnectServer()
 
 
+    // converts string to file path by replacing
+    private String getFilePath(String path){
+
+        return path.replace(" ", "\\");
+    } // getFilePath()
+
+
     // builds the tree view of the files
-    private void buildFileTree(TreeItem treeNode, FTPClient client, String path) throws Exception {
+    private void buildFileTree(TreeItem treeNode, FTPClient client) throws Exception {
 
         // display the files
-        FTPFile[] files = client.listFiles(path, FTPFile::isFile);
+        FTPFile[] files = client.listFiles("", FTPFile::isFile);
 
         for (FTPFile file : files) {
 
-            // add file to file tree
-            treeNode.getChildren().add(new TreeItem<>(file.getName() + " | " + ft.format(file.getTimestamp().getTime())));
+            if(!file.getName().startsWith(".")) {
+
+                System.out.println("File: " + file.getName());
+                // add file to file tree
+                treeNode.getChildren().add(new TreeItem<>(file.getName() + " | " + ft.format(file.getTimestamp().getTime())));
+
+            } // if
 
         } // for
 
         // get the directories
-        FTPFile[] directories = client.listDirectories(path);
+        FTPFile[] directories = client.listDirectories();
 
         for (FTPFile dir : directories) {
 
             if(!dir.getName().startsWith(".")) {
+
+                // change working directory to detected directory
+                client.changeWorkingDirectory(dir.getName());
+
                 // create treeItem to represent new Directory
                 TreeItem newDir = new TreeItem<>(dir.getName(), new ImageView(dirIcon));
 
                 // add directory to file tree
                 treeNode.getChildren().add(newDir);
 
-                // build path to new directory in server
-                String newPath = path + File.separator + dir.getName();
-
-                logTA.appendText("\nDiscovering Files in: " + newPath);
+                logTA.appendText("\nDiscovering Files in: " + client.printWorkingDirectory());
+                System.out.println("Discovering Files in: " + client.printWorkingDirectory());
 
                 // recursively call method to add files and directories to new directory
-                buildFileTree(newDir, client, newPath);
-            }
+                buildFileTree(newDir, client);
+
+                // go back to parent directory, once finished in this directory
+                client.changeToParentDirectory();
+
+            } // if
 
         } // for
 
@@ -295,56 +313,62 @@ public class MainController implements Initializable {
 
 
     // sync files, by download files that need to be downloaded
-    private void syncFiles(FTPClient client, String path) throws Exception {
+    private void syncFiles(FTPClient client) throws Exception {
 
-        long daysOld = 0;
+        long daysOld;
 
         // display the files
-        FTPFile[] files = client.listFiles(path, FTPFile::isFile);
+        FTPFile[] files = client.listFiles("", FTPFile::isFile);
 
         for (FTPFile file : files) {
 
-            // get the number of days old this file is
-            daysOld = Duration.between(file.getTimestamp().toInstant(), Calendar.getInstance().toInstant()).toDays();
-            System.out.println("File is " + daysOld + " days old");
+            if(!file.getName().startsWith(".")) {
 
-            // if file is not older then limit
-            if (daysOld < Long.parseLong(fileAgeLimitTF.getText())) {
+                // get the number of days old this file is
+                daysOld = Duration.between(file.getTimestamp().toInstant(), Calendar.getInstance().toInstant()).toDays();
 
-                System.out.println("Downloading: " + file.getName());
-                logTA.appendText("\nDownloading: " + file.getName());
+                System.out.println("File is " + daysOld + " days old");
 
-                // create outputStream for file
-                outStream = new FileOutputStream(outputDir.getName() + File.separator + file.getName());
+                // if file is not older then limit
+                if (daysOld < Long.parseLong(fileAgeLimitTF.getText())) {
 
-                // retrieve the files
-                client.retrieveFile(path + file.getName(), outStream);
+                    System.out.println("Downloading: " + file.getName());
+                    logTA.appendText("\nDownloading: " + file.getName());
 
-                // close the stream
-                outStream.close();
+                    // create outputStream for file
+                    outStream = new FileOutputStream(outputDir.getName() + File.separator + file.getName());
 
+                    // retrieve the files
+                    client.retrieveFile(file.getName(), outStream);
+
+                    // close the stream
+                    outStream.close();
+
+                } // if
             } // if
-
         } // for
 
         // get the directories
-        FTPFile[] directories = client.listDirectories(path);
+        FTPFile[] directories = client.listDirectories();
 
         for (FTPFile dir : directories) {
 
             if (!dir.getName().startsWith(".")) {
 
-                // build path to new directory in server
-                String newPath = path + File.separator + dir.getName();
+                // change working directory to detected directory
+                client.changeWorkingDirectory(dir.getName());
 
-                System.out.println("Downloading Files in: " + newPath);
+                System.out.println("Downloading Files in: " + client.printWorkingDirectory());
+                logTA.appendText("\nDownloading Files in: " + client.printWorkingDirectory());
 
                 // recursively call method to add files and directories to new directory
-                syncFiles(client, newPath);
+                syncFiles(client);
+
+                // go back to parent directory, once finished in this directory
+                client.changeToParentDirectory();
+
             } // if
-
         } // for
-
     } // syncFiles()
 
 } // class
