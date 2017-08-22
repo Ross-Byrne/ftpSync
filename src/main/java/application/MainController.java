@@ -192,7 +192,7 @@ public class MainController implements Initializable {
                     // download the files, in a separate thread
                     new Thread(() -> {
 
-                        System.out.println("Starting to download files");
+                        logTA.appendText("\nStarting to download files . . .");
 
                         try {
 
@@ -214,7 +214,7 @@ public class MainController implements Initializable {
                             return;
                         } // try
 
-                        System.out.println("Finished downloading files");
+                        logTA.appendText("\nFinished downloading files.");
 
                     }).start();
 
@@ -242,12 +242,13 @@ public class MainController implements Initializable {
             // disconnect client
             client.disconnect();
 
+            logTA.appendText("\nDisconnecting.");
             System.out.println("Disconnecting");
 
         } catch (Exception e) {
 
             //e.printStackTrace();
-            System.out.println("Error Disconnecting");
+            logTA.appendText("\nError Disconnecting.");
 
         } // try
 
@@ -282,7 +283,7 @@ public class MainController implements Initializable {
                 // build path to new directory in server
                 String newPath = path + File.separator + dir.getName();
 
-                System.out.println("Discovering Files in: " + newPath);
+                logTA.appendText("\nDiscovering Files in: " + newPath);
 
                 // recursively call method to add files and directories to new directory
                 buildFileTree(newDir, client, newPath);
@@ -308,9 +309,10 @@ public class MainController implements Initializable {
             System.out.println("File is " + daysOld + " days old");
 
             // if file is not older then limit
-            if (daysOld < daysLimit) {
+            if (daysOld < Long.parseLong(fileAgeLimitTF.getText())) {
 
                 System.out.println("Downloading: " + file.getName());
+                logTA.appendText("\nDownloading: " + file.getName());
 
                 // create outputStream for file
                 outStream = new FileOutputStream(outputDir.getName() + File.separator + file.getName());
