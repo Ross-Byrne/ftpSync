@@ -13,9 +13,9 @@ public class Main extends Application {
 
         Parent root = FXMLLoader.load(getClass().getResource("/fxml/main.fxml"));
         primaryStage.setTitle("ftp Sync");
-        primaryStage.setScene(new Scene(root, 900, 600));
-        primaryStage.setMinWidth(600);
-        primaryStage.setMinHeight(600);
+        primaryStage.setScene(new Scene(root, 1000, 700));
+        primaryStage.setMinWidth(800);
+        primaryStage.setMinHeight(700);
         primaryStage.show();
 
     } // start()

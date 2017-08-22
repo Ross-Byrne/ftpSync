@@ -38,20 +38,22 @@ public class MainController implements Initializable {
     @FXML private TextField usernameTF;
     @FXML private PasswordField passwordPF;
     @FXML private Button loginBT;
-    @FXML private Label messageLB;
+    @FXML private TextArea logTA;
     @FXML private Button outputDirBT;
     @FXML private Label outputDirLB;
+    @FXML private TextField fileAgeLimitTF;
+
 
     // variables
 
-    FTPClient client = new FTPClient();
-    InetAddress address;
-    DirectoryChooser directoryChooser = new DirectoryChooser();
-    File outputDir = new File("downloadedFiles");
-    OutputStream outStream;
-    SimpleDateFormat ft = new SimpleDateFormat ("HH:mm:ss MMM d");
-    long daysLimit = 7;
-    boolean outputDirSelected;
+    private FTPClient client = new FTPClient();
+    private InetAddress address;
+    private DirectoryChooser directoryChooser = new DirectoryChooser();
+    private File outputDir = new File("downloadedFiles");
+    private OutputStream outStream;
+    private SimpleDateFormat ft = new SimpleDateFormat ("HH:mm:ss MMM d");
+    private int daysLimit = 7;
+    private boolean outputDirSelected;
 
     private Image dirIcon = new Image(getClass().getResourceAsStream("/icons/directory_icon.png"));
 
@@ -63,6 +65,9 @@ public class MainController implements Initializable {
 
         // set up directory chooser
         directoryChooser.setTitle("Select Download Location");
+
+        // set default age limit
+        fileAgeLimitTF.setText(String.valueOf(daysLimit));
 
         // set up file tree
         TreeItem<String> rootItem = new TreeItem<> ("Root: /", new ImageView(dirIcon));
@@ -83,7 +88,7 @@ public class MainController implements Initializable {
         System.out.println("Login Click");
 
         // clear message label
-        messageLB.setText("Logging in...");
+        logTA.setText("Logging in...");
 
         // clear the file tree
 
@@ -98,26 +103,26 @@ public class MainController implements Initializable {
 
         if(addressTF.getCharacters().length() < 3){
 
-            this.messageLB.setText("Error, enter ftp server address.");
+            logTA.appendText("\nError, enter ftp server address.");
             return;
         }
 
         if(usernameTF.getCharacters().length() < 1){
 
-            this.messageLB.setText("Error, enter Username.");
+            logTA.appendText("\nError, enter Username.");
             return;
         }
 
         if(passwordPF.getCharacters().length() < 1){
 
-            this.messageLB.setText("Error, enter Password.");
+            logTA.appendText("\nError, enter Password.");
             return;
         }
 
         // make sure output directory is selected
         if(outputDirSelected == false){
 
-            this.messageLB.setText("Please select an output directory for downloaded files.");
+            logTA.appendText("\nError, please select an output directory for downloaded files.");
             return;
         }
 
@@ -168,7 +173,7 @@ public class MainController implements Initializable {
 
                     if (!FTPReply.isPositiveCompletion(client.getReplyCode())){
 
-                        messageLB.setText("Error: " + client.getReplyString());
+                        logTA.appendText("\nError: " + client.getReplyString());
 
                         client.disconnect();
 
@@ -179,7 +184,7 @@ public class MainController implements Initializable {
                     client.enterLocalPassiveMode();
 
                     // logged in ok
-                    messageLB.setText(client.getReplyString());
+                    logTA.appendText("\n" + client.getReplyString());
 
                     // display files
                     buildFileTree(fileTreeView.getRoot(), client, "");
@@ -199,7 +204,7 @@ public class MainController implements Initializable {
 
                         } catch (Exception ex){
 
-                            messageLB.setText("Error Downloading files!");
+                            logTA.appendText("\nError Downloading files!");
 
                             // disconnect from the server
                             disconnectServer();
@@ -218,7 +223,7 @@ public class MainController implements Initializable {
             }catch (Exception e){
 
                 System.out.println("Error: " + e.getMessage());
-                messageLB.setText("Error: " + e.getMessage());
+                logTA.appendText("\nError: " + e.getMessage());
 
                 // disconnect the user from server
                 disconnectServer();
