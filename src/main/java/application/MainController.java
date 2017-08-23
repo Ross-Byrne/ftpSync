@@ -424,7 +424,7 @@ public class MainController implements Initializable {
                     Platform.runLater(() -> logTA.appendText("\nDownloading: " + file.getName()));
 
                     // create outputStream for file
-                    outStream = new FileOutputStream(outputDir.getName() + File.separator + file.getName());
+                    outStream = new FileOutputStream(outputDir.getAbsoluteFile() + File.separator + file.getName());
 
                     // retrieve the files
                     client.retrieveFile(file.getName(), outStream);
