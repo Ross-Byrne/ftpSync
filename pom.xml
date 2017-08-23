@@ -83,9 +83,9 @@
                 <version>8.8.3</version>
                 <configuration>
                     <vendor>ftpSync</vendor>
-                    <nativeReleaseVersion>${version}</nativeReleaseVersion>
+                    <nativeReleaseVersion>${project.version}</nativeReleaseVersion>
                     <mainClass>application.Main</mainClass>
-                    <jfxMainAppJarName>ftpSync-${version}.jar</jfxMainAppJarName>
+                    <jfxMainAppJarName>ftpSync-${project.version}.jar</jfxMainAppJarName>
                     <needShortcut>true</needShortcut>
                     <needMenu>true</needMenu>
                     <appName>ftpSync</appName>
