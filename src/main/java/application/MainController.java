@@ -193,8 +193,24 @@ public class MainController implements Initializable {
                     // sync the files
                     syncFiles(client);
 
-                    // disconnect from the server
-                    disconnectServer();
+                    Platform.runLater(() ->{
+
+                        // update displayed files
+                        try {
+
+                            displayFileTree(client);
+
+                        } catch (Exception e) {
+
+                            logTA.appendText("\nError updating file tree!");
+                            e.printStackTrace();
+                        } // try
+
+                        // disconnect from the server
+                        disconnectServer();
+
+                    });
+
 
                 } catch (Exception ex){
 
@@ -304,7 +320,7 @@ public class MainController implements Initializable {
                 logTA.appendText("\n" + client.getReplyString());
 
                 // display files
-                buildFileTree(fileTreeView.getRoot(), client);
+                displayFileTree(client);
 
             } // if
 
@@ -341,6 +357,21 @@ public class MainController implements Initializable {
     } // disconnectServer()
 
 
+    // use recursive method to build and display file tree
+    private void displayFileTree(FTPClient client) throws Exception{
+
+        // set up file tree
+        TreeItem<String> rootItem = new TreeItem<> ("Root: /", new ImageView(dirIcon));
+        rootItem.setExpanded(true);
+
+        // set the tree root
+        fileTreeView.setRoot(rootItem);
+
+        // start building the file tree
+        buildFileTree(fileTreeView.getRoot(), client);
+
+    } // displayFileTree()
+
     // builds the tree view of the files
     private void buildFileTree(TreeItem treeNode, FTPClient client) throws Exception {
 
@@ -353,7 +384,9 @@ public class MainController implements Initializable {
 
                 System.out.println("File: " + file.getName());
                 // add file to file tree
-                treeNode.getChildren().add(new TreeItem<>(file.getName() + " | " + ft.format(file.getTimestamp().getTime())));
+                treeNode.getChildren().add(new TreeItem<>(file.getName() + " | " +
+                        ft.format(file.getTimestamp().getTime()) + " | " +
+                        checkIfSynced(file.getName())));
 
             } // if
 
@@ -371,6 +404,7 @@ public class MainController implements Initializable {
 
                 // create treeItem to represent new Directory
                 TreeItem newDir = new TreeItem<>(dir.getName(), new ImageView(dirIcon));
+                newDir.setExpanded(true);
 
                 // add directory to file tree
                 treeNode.getChildren().add(newDir);
@@ -389,6 +423,17 @@ public class MainController implements Initializable {
         } // for
 
     } // buildFileTree()
+
+
+    // returns the string "Synced" if the file is synced
+    private String checkIfSynced(String fileName){
+
+        if(syncedFileLedger.contains(fileName))
+            return "Synced";
+        else
+            return "Not Synced";
+
+    } // checkIfSynced()
 
 
     // sync files, by download files that need to be downloaded
