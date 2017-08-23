@@ -1,31 +1,22 @@
 package application;
 
-import javafx.event.Event;
-import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
-import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.stage.DirectoryChooser;
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.net.ftp.FTPClient;
 import org.apache.commons.net.ftp.FTPFile;
 import org.apache.commons.net.ftp.FTPReply;
 
 import java.io.File;
 import java.io.FileOutputStream;
-import java.io.IOException;
 import java.io.OutputStream;
 import java.net.InetAddress;
 import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.time.Duration;
-import java.time.chrono.ChronoPeriod;
-import java.time.format.DateTimeFormatter;
-import java.time.temporal.ChronoUnit;
-import java.time.temporal.Temporal;
 import java.util.Calendar;
 import java.util.ResourceBundle;
 
@@ -52,7 +43,7 @@ public class MainController implements Initializable {
     private File outputDir = new File("downloadedFiles");
     private OutputStream outStream;
     private SimpleDateFormat ft = new SimpleDateFormat ("HH:mm:ss MMM d");
-    private int daysLimit = 7;
+    private int defaultDaysLimit = 6;
     private boolean outputDirSelected;
 
     private Image dirIcon = new Image(getClass().getResourceAsStream("/icons/directory_icon.png"));
@@ -67,7 +58,7 @@ public class MainController implements Initializable {
         directoryChooser.setTitle("Select Download Location");
 
         // set default age limit
-        fileAgeLimitTF.setText(String.valueOf(daysLimit));
+        fileAgeLimitTF.setText(String.valueOf(defaultDaysLimit));
 
         // set up file tree
         TreeItem<String> rootItem = new TreeItem<> ("Root: /", new ImageView(dirIcon));
@@ -230,7 +221,6 @@ public class MainController implements Initializable {
 
             } // try
         } // if
-
     } // connectToServer()
 
 
@@ -253,13 +243,6 @@ public class MainController implements Initializable {
         } // try
 
     } // disconnectServer()
-
-
-    // converts string to file path by replacing
-    private String getFilePath(String path){
-
-        return path.replace(" ", "\\");
-    } // getFilePath()
 
 
     // builds the tree view of the files
@@ -320,6 +303,12 @@ public class MainController implements Initializable {
         // display the files
         FTPFile[] files = client.listFiles("", FTPFile::isFile);
 
+        if(files.length > 0){
+
+            System.out.println("Downloading Files in: " + client.printWorkingDirectory());
+            logTA.appendText("\nDownloading Files in: " + client.printWorkingDirectory());
+        } // if
+
         for (FTPFile file : files) {
 
             if(!file.getName().startsWith(".")) {
@@ -357,9 +346,6 @@ public class MainController implements Initializable {
 
                 // change working directory to detected directory
                 client.changeWorkingDirectory(dir.getName());
-
-                System.out.println("Downloading Files in: " + client.printWorkingDirectory());
-                logTA.appendText("\nDownloading Files in: " + client.printWorkingDirectory());
 
                 // recursively call method to add files and directories to new directory
                 syncFiles(client);
