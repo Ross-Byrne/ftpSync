@@ -64,9 +64,9 @@
         <content>
           <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0">
                <children>
-                  <Label layoutX="28.0" layoutY="59.0" prefHeight="24.0" prefWidth="176.0" text="Only sync files newer than" AnchorPane.leftAnchor="28.0" AnchorPane.topAnchor="55.0" />
+                  <Label layoutX="28.0" layoutY="59.0" prefHeight="24.0" text="Only sync files newer than" AnchorPane.leftAnchor="28.0" AnchorPane.topAnchor="55.0" />
                   <TextField fx:id="fileAgeLimitTF" alignment="CENTER" layoutX="207.0" layoutY="53.0" prefHeight="25.0" prefWidth="48.0" AnchorPane.leftAnchor="207.0" AnchorPane.topAnchor="55.0" />
-                  <Label layoutX="261.0" layoutY="53.0" prefHeight="24.0" prefWidth="93.0" text="days old." AnchorPane.leftAnchor="261.0" AnchorPane.topAnchor="55.0" />
+                  <Label layoutX="261.0" layoutY="53.0" prefHeight="24.0" text="days old." AnchorPane.leftAnchor="261.0" AnchorPane.topAnchor="55.0" />
                   <Label layoutX="28.0" layoutY="27.0" prefHeight="24.0" prefWidth="126.0" text="File Age Limit:" AnchorPane.leftAnchor="28.0" AnchorPane.topAnchor="25.0">
                      <font>
                         <Font name="System Bold" size="13.0" />
