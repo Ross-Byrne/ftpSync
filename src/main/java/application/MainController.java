@@ -241,7 +241,6 @@ public class MainController implements Initializable {
             logTA.appendText("\nError Disconnecting.");
 
         } // try
-
     } // disconnectServer()
 
 
