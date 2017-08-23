@@ -49,6 +49,7 @@ public class MainController implements Initializable {
     private long defaultDaysLimit = 6;
     private long daysLimit;
     private boolean outputDirSelected;
+    private boolean isDownloadingFiles;
 
     private Image dirIcon = new Image(getClass().getResourceAsStream("/icons/directory_icon.png"));
 
@@ -147,97 +148,117 @@ public class MainController implements Initializable {
     } // outputDirBT_OnAction()
 
 
-    private void connectToServer(String serverAddress, String username, String password){
+    // runs when the Sync Files button is pressed
+    @FXML void syncFilesBT_OnAction(){
 
         Task downloadTask;
 
+        // check if logged in
+        if(client.isConnected() == false) {
+
+            logTA.appendText("Error, not logged in. Cannot sync files.");
+            return;
+        } // if
+
+        // flag as downloading
+        isDownloadingFiles = true;
+
+        // update the days limit
+        daysLimit = Long.parseLong(fileAgeLimitTF.getText());
+
+        // download the files, in a separate thread
+        downloadTask = new Task<Boolean>(){
+
+            protected Boolean call() throws Exception {
+
+                Platform.runLater(() -> logTA.appendText("\nStarting to download files . . ."));
+
+                try {
+
+                    // sync the files
+                    syncFiles(client);
+
+                    // disconnect from the server
+                    disconnectServer();
+
+                } catch (Exception ex){
+
+                    Platform.runLater(() -> logTA.appendText("\nError Downloading files!"));
+
+                    // disconnect from the server
+                    disconnectServer();
+
+                    isDownloadingFiles = false;
+
+                    ex.printStackTrace();
+
+                    return false;
+                } // try
+
+                Platform.runLater(() -> logTA.appendText("\nFinished downloading files."));
+
+                isDownloadingFiles = false;
+
+                return true;
+            } // call()
+        };
+
+        // start the thread
+        new Thread(downloadTask).start();
+
+
+    } // syncFilesBT_OnAction()
+
+
+    // connects to the ftp server and discovers the files
+    private void connectToServer(String serverAddress, String username, String password){
+
         // try connect
-        if(this.client.isConnected() == false){
+        try {
 
-            try {
+            // create a server address
+            this.address = InetAddress.getByName(serverAddress);
 
-                // create a server address
-                this.address = InetAddress.getByName(serverAddress);
+            // connect to the address
+            client.connect(address, 21);
 
-                // connect to the address
-                client.connect(address, 21);
+            // try and login
+            client.login(username, password);
 
-                // try and login
-                client.login(username, password);
+            if (client.isConnected()) {
 
-                if (client.isConnected()) {
+                System.out.print(client.getReplyString());
 
-                    System.out.print(client.getReplyString());
+                if (!FTPReply.isPositiveCompletion(client.getReplyCode())){
 
-                    if (!FTPReply.isPositiveCompletion(client.getReplyCode())){
+                    logTA.appendText("\nError: " + client.getReplyString());
 
-                        logTA.appendText("\nError: " + client.getReplyString());
+                    client.disconnect();
 
-                        client.disconnect();
-
-                        return;
-                    } // if
-
-                    // enter passive mode
-                    client.enterLocalPassiveMode();
-
-                    // logged in ok
-                    logTA.appendText("\n" + client.getReplyString());
-
-                    // display files
-                    buildFileTree(fileTreeView.getRoot(), client);
-
-                    // update the days limit
-                    daysLimit = Long.parseLong(fileAgeLimitTF.getText());
-
-                    // download the files, in a separate thread
-                    downloadTask = new Task<Boolean>(){
-
-                        protected Boolean call() throws Exception {
-
-                            Platform.runLater(() -> logTA.appendText("\nStarting to download files . . ."));
-
-                            try {
-
-                                // sync the files
-                                syncFiles(client);
-
-                                // disconnect from the server
-                                disconnectServer();
-
-                            } catch (Exception ex){
-
-                                Platform.runLater(() -> logTA.appendText("\nError Downloading files!"));
-
-                                // disconnect from the server
-                                disconnectServer();
-
-                                ex.printStackTrace();
-
-                                return false;
-                            } // try
-
-                            Platform.runLater(() -> logTA.appendText("\nFinished downloading files."));
-
-                            return true;
-                        } // call()
-                    };
-
-                    // start the thread
-                    new Thread(downloadTask).start();
-
+                    return;
                 } // if
 
-            }catch (Exception e){
+                // enter passive mode
+                client.enterLocalPassiveMode();
 
-                System.out.println("Error: " + e.getMessage());
-                logTA.appendText("\nError: " + e.getMessage());
+                // logged in ok
+                logTA.appendText("\n" + client.getReplyString());
 
-                // disconnect the user from server
-                disconnectServer();
+                // display files
+                buildFileTree(fileTreeView.getRoot(), client);
 
-            } // try
-        } // if
+            } // if
+
+        }catch (Exception e){
+
+            System.out.println("Error: " + e.getMessage());
+            logTA.appendText("\nError: " + e.getMessage());
+
+            // disconnect the user from server
+            disconnectServer();
+
+        } // try
+
     } // connectToServer()
 
 
