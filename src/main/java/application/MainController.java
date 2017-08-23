@@ -46,6 +46,7 @@ public class MainController implements Initializable {
     private File outputDir;
     private OutputStream outStream;
     private SimpleDateFormat ft = new SimpleDateFormat ("HH:mm:ss MMM d");
+    private File settingsDir;
     private long defaultDaysLimit = 6;
     private long daysLimit;
     private boolean outputDirSelected;
@@ -56,8 +57,9 @@ public class MainController implements Initializable {
 
     public void initialize(URL location, ResourceBundle resources) {
 
-        // make the output directory
-        //outputDir.mkdir();
+        // make the settings directory
+        settingsDir = new File("settings");
+        settingsDir.mkdir();
 
         // set up directory chooser
         directoryChooser.setTitle("Select Download Location");
