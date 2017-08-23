@@ -1,5 +1,8 @@
 package application;
 
+import com.sun.org.apache.xpath.internal.operations.Bool;
+import javafx.application.Platform;
+import javafx.concurrent.Task;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.*;
@@ -40,10 +43,11 @@ public class MainController implements Initializable {
     private FTPClient client = new FTPClient();
     private InetAddress address;
     private DirectoryChooser directoryChooser = new DirectoryChooser();
-    private File outputDir = new File("downloadedFiles");
+    private File outputDir;
     private OutputStream outStream;
     private SimpleDateFormat ft = new SimpleDateFormat ("HH:mm:ss MMM d");
-    private int defaultDaysLimit = 6;
+    private long defaultDaysLimit = 6;
+    private long daysLimit;
     private boolean outputDirSelected;
 
     private Image dirIcon = new Image(getClass().getResourceAsStream("/icons/directory_icon.png"));
@@ -52,13 +56,14 @@ public class MainController implements Initializable {
     public void initialize(URL location, ResourceBundle resources) {
 
         // make the output directory
-        outputDir.mkdir();
+        //outputDir.mkdir();
 
         // set up directory chooser
         directoryChooser.setTitle("Select Download Location");
 
         // set default age limit
         fileAgeLimitTF.setText(String.valueOf(defaultDaysLimit));
+        daysLimit = defaultDaysLimit;
 
         // set up file tree
         TreeItem<String> rootItem = new TreeItem<> ("Root: /", new ImageView(dirIcon));
@@ -144,6 +149,8 @@ public class MainController implements Initializable {
 
     private void connectToServer(String serverAddress, String username, String password){
 
+        Task downloadTask;
+
         // try connect
         if(this.client.isConnected() == false){
 
@@ -180,34 +187,44 @@ public class MainController implements Initializable {
                     // display files
                     buildFileTree(fileTreeView.getRoot(), client);
 
+                    // update the days limit
+                    daysLimit = Long.parseLong(fileAgeLimitTF.getText());
+
                     // download the files, in a separate thread
-                    new Thread(() -> {
+                    downloadTask = new Task<Boolean>(){
 
-                        logTA.appendText("\nStarting to download files . . .");
+                        protected Boolean call() throws Exception {
 
-                        try {
+                            Platform.runLater(() -> logTA.appendText("\nStarting to download files . . ."));
 
-                            // sync the files
-                            syncFiles(client);
+                            try {
 
-                            // disconnect from the server
-                            disconnectServer();
+                                // sync the files
+                                syncFiles(client);
 
-                        } catch (Exception ex){
+                                // disconnect from the server
+                                disconnectServer();
 
-                            logTA.appendText("\nError Downloading files!");
+                            } catch (Exception ex){
 
-                            // disconnect from the server
-                            disconnectServer();
+                                Platform.runLater(() -> logTA.appendText("\nError Downloading files!"));
 
-                            ex.printStackTrace();
+                                // disconnect from the server
+                                disconnectServer();
 
-                            return;
-                        } // try
+                                ex.printStackTrace();
 
-                        logTA.appendText("\nFinished downloading files.");
+                                return false;
+                            } // try
 
-                    }).start();
+                            Platform.runLater(() -> logTA.appendText("\nFinished downloading files."));
+
+                            return true;
+                        } // call()
+                    };
+
+                    // start the thread
+                    new Thread(downloadTask).start();
 
                 } // if
 
@@ -298,14 +315,17 @@ public class MainController implements Initializable {
     private void syncFiles(FTPClient client) throws Exception {
 
         long daysOld;
+        String pwd;
 
         // display the files
         FTPFile[] files = client.listFiles("", FTPFile::isFile);
 
         if(files.length > 0){
 
+            pwd = client.printWorkingDirectory();
             System.out.println("Downloading Files in: " + client.printWorkingDirectory());
-            logTA.appendText("\nDownloading Files in: " + client.printWorkingDirectory());
+            Platform.runLater(() -> logTA.appendText("\nDownloading Files in: " + pwd));
+
         } // if
 
         for (FTPFile file : files) {
@@ -318,10 +338,10 @@ public class MainController implements Initializable {
                 System.out.println("File is " + daysOld + " days old");
 
                 // if file is not older then limit
-                if (daysOld < Long.parseLong(fileAgeLimitTF.getText())) {
+                if (daysOld < daysLimit) {
 
                     System.out.println("Downloading: " + file.getName());
-                    logTA.appendText("\nDownloading: " + file.getName());
+                    Platform.runLater(() -> logTA.appendText("\nDownloading: " + file.getName()));
 
                     // create outputStream for file
                     outStream = new FileOutputStream(outputDir.getName() + File.separator + file.getName());
