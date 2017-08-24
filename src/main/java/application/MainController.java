@@ -43,7 +43,6 @@ public class MainController implements Initializable {
     private File outputDir;
     private OutputStream outStream;
     private SimpleDateFormat ft = new SimpleDateFormat ("HH:mm:ss MMM d");
-    private File settingsDir;
     private long defaultDaysLimit = 6;
     private long daysLimit;
     private boolean outputDirSelected;
@@ -53,24 +52,6 @@ public class MainController implements Initializable {
 
 
     public void initialize(URL location, ResourceBundle resources) {
-
-        // make the settings directory
-        settingsDir = new File("settings");
-
-        if(settingsDir.exists()){
-
-            // try load settings
-
-            // load the set of synced files
-            dataManager.loadSyncedFileLedger();
-
-        } else {
-
-            // make settings directory
-            settingsDir.mkdir();
-
-            System.out.println("Settings folder not found, recreating.");
-        } // if
 
         // set up directory chooser
         directoryChooser.setTitle("Select Download Location");

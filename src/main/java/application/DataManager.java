@@ -15,10 +15,31 @@ public class DataManager {
     private String serverAddress;
     private String username;
     private int fileAgeLimit;
-    private File settingsDir = new File("settings");
+    private File settingsDir;
 
     private HashSet<String> syncedFileLedger = new HashSet<>();
 
+
+    public DataManager(){
+
+        // make the settings directory
+        settingsDir = new File("settings");
+
+        if(settingsDir.exists()){
+
+            // try load settings
+
+            // load the set of synced files
+            loadSyncedFileLedger();
+
+        } else {
+
+            // make settings directory
+            settingsDir.mkdir();
+
+            System.out.println("Settings folder not found, recreating.");
+        } // if
+    } // constructor
 
     // loads the programs preferences
     public boolean loadPreferences(){
