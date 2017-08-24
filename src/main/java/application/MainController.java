@@ -134,8 +134,16 @@ public class MainController implements Initializable {
             return;
         }
 
-        // try login
-        connectToServer(this.addressTF.getText(), this.usernameTF.getText(), this.passwordPF.getText());
+        // try login, in a separate thread
+        new Thread(new Task<Void>(){
+
+            protected Void call() throws Exception {
+
+                // connect to the server
+                connectToServer(addressTF.getText(), usernameTF.getText(), passwordPF.getText());
+                return null;
+            }
+        }).start();
 
     } // loginButtonClick()
 
@@ -207,7 +215,6 @@ public class MainController implements Initializable {
 
                     });
 
-
                 } catch (Exception ex){
 
                     Platform.runLater(() -> logTA.appendText("\nError Downloading files!"));
@@ -235,7 +242,6 @@ public class MainController implements Initializable {
 
         // start the thread
         new Thread(downloadTask).start();
-
 
     } // syncFilesBT_OnAction()
 
@@ -302,7 +308,7 @@ public class MainController implements Initializable {
 
                 if (!FTPReply.isPositiveCompletion(client.getReplyCode())){
 
-                    logTA.appendText("\nError: " + client.getReplyString());
+                    Platform.runLater(() -> logTA.appendText("\nError: " + client.getReplyString()));
 
                     client.disconnect();
 
@@ -313,17 +319,28 @@ public class MainController implements Initializable {
                 client.enterLocalPassiveMode();
 
                 // logged in ok
-                logTA.appendText("\n" + client.getReplyString());
+                Platform.runLater(() -> logTA.appendText("\n" + client.getReplyString()));
 
                 // display files
-                displayFileTree(client);
+                Platform.runLater(() ->{
+
+                    try {
+
+                        displayFileTree(client);
+
+                    } catch (Exception e) {
+
+                        logTA.appendText("\nError updating file tree!");
+                        e.printStackTrace();
+                    } // try
+                });
 
             } // if
 
         }catch (Exception e){
 
-            System.out.println("Error: " + e.getMessage());
-            logTA.appendText("\nError: " + e.getMessage());
+            System.out.println("Error, cannot connect to the server.");
+            Platform.runLater(() -> logTA.appendText("\nError, cannot connect to the server."));
 
             // disconnect the user from server
             disconnectServer();
@@ -341,13 +358,13 @@ public class MainController implements Initializable {
             // disconnect client
             client.disconnect();
 
-            logTA.appendText("\nDisconnecting.");
+            Platform.runLater(() -> logTA.appendText("\nDisconnecting."));
             System.out.println("Disconnecting");
 
         } catch (Exception e) {
 
             //e.printStackTrace();
-            logTA.appendText("\nError Disconnecting.");
+            Platform.runLater(() -> logTA.appendText("\nError Disconnecting."));
 
         } // try
     } // disconnectServer()
