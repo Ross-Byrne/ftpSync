@@ -36,7 +36,7 @@ public class MainController implements Initializable {
 
     // variables
 
-    private Preferences prefs = new Preferences();
+    private DataManager dataManager = new DataManager();
     private FTPClient client = new FTPClient();
     private InetAddress address;
     private DirectoryChooser directoryChooser = new DirectoryChooser();
@@ -44,8 +44,6 @@ public class MainController implements Initializable {
     private OutputStream outStream;
     private SimpleDateFormat ft = new SimpleDateFormat ("HH:mm:ss MMM d");
     private File settingsDir;
-    private HashSet<String> syncedFileLedger = new HashSet<>();
-    private String syncedFileLedgerName = "syncedFiles.dat";
     private long defaultDaysLimit = 6;
     private long daysLimit;
     private boolean outputDirSelected;
@@ -64,7 +62,7 @@ public class MainController implements Initializable {
             // try load settings
 
             // load the set of synced files
-            loadSyncedFileLedger();
+            dataManager.loadSyncedFileLedger();
 
         } else {
 
@@ -92,8 +90,6 @@ public class MainController implements Initializable {
 
     // onClick method for login button
     @FXML void loginButtonClick_OnAction(){
-
-        System.out.println("Login Click");
 
         // clear message label
         logTA.setText("Logging in...");
@@ -234,7 +230,7 @@ public class MainController implements Initializable {
                 isDownloadingFiles = false;
 
                 // save the set of synced files
-                saveSyncedFileLedger();
+                dataManager.saveSyncedFileLedger();
 
                 return true;
             } // call()
@@ -244,47 +240,6 @@ public class MainController implements Initializable {
         new Thread(downloadTask).start();
 
     } // syncFilesBT_OnAction()
-
-    // loads the synced file ledger from a file
-    private void loadSyncedFileLedger(){
-
-        try {
-
-            System.out.println("Loading synced file ledger.");
-
-            FileInputStream fin = new FileInputStream(settingsDir.getName() + File.separator + syncedFileLedgerName);
-            ObjectInputStream ois = new ObjectInputStream(fin);
-            syncedFileLedger = (HashSet<String>) ois.readObject();
-
-        }catch (FileNotFoundException fnf){
-
-            System.out.println("Error, syncedFileLedger file not found.");
-        }
-        catch(Exception e){
-
-            e.printStackTrace();
-        } // try
-
-    } // loadSyncedFileLedger()
-
-    // saves the map that contains all the files that are synced
-    private void saveSyncedFileLedger(){
-
-        try {
-
-            System.out.println("Saving synced file ledger.");
-
-            FileOutputStream fout = new FileOutputStream(settingsDir.getName() + File.separator + syncedFileLedgerName);
-            ObjectOutputStream oos = new ObjectOutputStream(fout);
-            oos.writeObject(syncedFileLedger);
-
-        }catch (Exception e){
-
-            System.out.println("Error saving synced file ledger");
-            e.printStackTrace();
-        } // try
-
-    } // saveSyncedFileLedger()
 
 
     // connects to the ftp server and discovers the files
@@ -439,9 +394,9 @@ public class MainController implements Initializable {
 
 
     // returns the string "Synced" if the file is synced
-    private String checkIfSynced(String fileName){
+    private String checkIfSynced(String remoteFilePath){
 
-        if(syncedFileLedger.contains(fileName))
+        if(dataManager.isFileSynced(remoteFilePath))
             return "Synced";
         else
             return "Not Synced";
@@ -478,7 +433,7 @@ public class MainController implements Initializable {
 
                 System.out.println("File on server: " + remoteFilePath);
                 // if file is not older then limit and not already synced
-                if (daysOld < daysLimit && syncedFileLedger.contains(remoteFilePath) == false) {
+                if (daysOld < daysLimit && dataManager.isFileSynced(remoteFilePath) == false) {
 
                     System.out.println("Downloading: " + remoteFilePath);
                     Platform.runLater(() -> logTA.appendText("\nDownloading: " + remoteFilePath));
@@ -497,7 +452,7 @@ public class MainController implements Initializable {
                     outStream.close();
 
                     // flag file as synced
-                    syncedFileLedger.add(remoteFilePath);
+                    dataManager.flagFileAsSynced(remoteFilePath);
 
                 } // if
             } // if

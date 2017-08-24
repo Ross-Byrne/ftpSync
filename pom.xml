@@ -5,8 +5,9 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>ftpSync</groupId>
     <artifactId>ftpSync</artifactId>
-    <version>1.0.0</version>
+    <version>1.0.1</version>
     <packaging>jar</packaging>
+    <description>A simple ftp file syncing program. Syncs files newer than a selected number of days.</description>
 
     <properties>
         <java.version>1.8</java.version>
