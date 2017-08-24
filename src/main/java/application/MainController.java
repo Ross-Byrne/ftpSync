@@ -108,18 +108,28 @@ public class MainController implements Initializable {
         if(addressTF.getCharacters().length() < 3){
 
             logTA.appendText("\nError, enter ftp server address.");
+
+            // show alert
+            Alert alert = new Alert(Alert.AlertType.ERROR, "Enter ftp server address.");
+            alert.showAndWait();
             return;
         }
 
         if(usernameTF.getCharacters().length() < 1){
 
             logTA.appendText("\nError, enter Username.");
+            // show alert
+            Alert alert = new Alert(Alert.AlertType.ERROR, "Enter username.");
+            alert.showAndWait();
             return;
         }
 
         if(passwordPF.getCharacters().length() < 1){
 
             logTA.appendText("\nError, enter Password.");
+            // show alert
+            Alert alert = new Alert(Alert.AlertType.ERROR, "Enter password.");
+            alert.showAndWait();
             return;
         }
 
@@ -127,6 +137,9 @@ public class MainController implements Initializable {
         if(outputDirSelected == false){
 
             logTA.appendText("\nError, please select an output directory for downloaded files.");
+            // show alert
+            Alert alert = new Alert(Alert.AlertType.ERROR, "Select a directory for downloaded files.");
+            alert.showAndWait();
             return;
         }
 
@@ -172,6 +185,9 @@ public class MainController implements Initializable {
         if(client.isConnected() == false) {
 
             logTA.appendText("\nError, not logged in. Cannot sync files.");
+            // show alert
+            Alert alert = new Alert(Alert.AlertType.ERROR, "Not logged in, cannot sync files.");
+            alert.showAndWait();
             return;
         } // if
 
