@@ -48,17 +48,16 @@ public class DataManager {
 
 
     // loads the programs preferences
-    public boolean loadPreferences(){
+    public void loadPreferences(){
 
-        return true;
+
     } // loadPreferences()
 
 
     // saves the programs preferences
-    public boolean savePreferences(){
+    public void savePreferences(){
 
 
-        return true;
     } // savePreferences();
 
     // loads the synced file ledger from a file

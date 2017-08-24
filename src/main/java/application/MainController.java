@@ -70,6 +70,37 @@ public class MainController implements Initializable {
         addressTF.setText(dataManager.getServerAddress());
         usernameTF.setText(dataManager.getUsername());
 
+        // save the value after it is set
+        fileAgeLimitTF.focusedProperty().addListener((observable, oldPropertyValue, newPropertyValue) -> {
+
+            if(!newPropertyValue) { // if lost focus
+
+                // if made blank, reset the value
+                if (fileAgeLimitTF.getText() == "") {
+                    fileAgeLimitTF.setText(String.valueOf(dataManager.getFileAgeLimit()));
+                    return;
+                }
+
+                try {
+
+                    // save the file age limit
+                    dataManager.setFileAgeLimit(Integer.parseInt(fileAgeLimitTF.getText()));
+
+                } catch (Exception e) {
+
+                    // fails if value is not a number
+
+                    // reset value
+                    fileAgeLimitTF.setText(String.valueOf(dataManager.getFileAgeLimit()));
+
+                    // show alert
+                    Alert alert = new Alert(Alert.AlertType.ERROR, "Value entered must be a number!");
+                    alert.showAndWait();
+
+                } // try
+            } // if
+        });
+
     } // initialize()
 
     // onClick method for login button
