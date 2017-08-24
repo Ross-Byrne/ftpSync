@@ -15,7 +15,7 @@ How can you regularly download the new files, without having to click through fo
 ### Solution
 Use this program as a tool to download files that are newer then a set number of days. This allows you to get all your new files, without having to search through many folders to find them or without having to re-download old files you no longer need.
 
-## Development Setup
+# Development Setup
 
 The development IDE is IntelliJ IDEA and the project uses maven.
 
