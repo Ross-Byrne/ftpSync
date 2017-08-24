@@ -474,23 +474,21 @@ public class MainController implements Initializable {
                 daysOld = Duration.between(file.getTimestamp().toInstant(), Calendar.getInstance().toInstant()).toDays();
 
                 System.out.println("File is " + daysOld + " days old");
-                String fileOnServer = client.printWorkingDirectory() + File.separator + file.getName();
+                String remoteFilePath = client.printWorkingDirectory() + File.separator + file.getName();
 
-                System.out.println("File on server: " + fileOnServer);
+                System.out.println("File on server: " + remoteFilePath);
                 // if file is not older then limit and not already synced
-                if (daysOld < daysLimit && syncedFileLedger.contains(fileOnServer) == false) {
+                if (daysOld < daysLimit && syncedFileLedger.contains(remoteFilePath) == false) {
 
-                    System.out.println("Downloading: " + file.getName());
-                    Platform.runLater(() -> logTA.appendText("\nDownloading: " + file.getName()));
+                    System.out.println("Downloading: " + remoteFilePath);
+                    Platform.runLater(() -> logTA.appendText("\nDownloading: " + remoteFilePath));
 
                     // create the directory that the file will be places in on users pc
-                    File filePath = new File(outputDir.getAbsoluteFile() + client.printWorkingDirectory());
-                    filePath.mkdirs();
-
-                    System.out.println("Output file: " + filePath.getAbsolutePath());
+                    File localFilePath = new File(outputDir.getAbsoluteFile() + client.printWorkingDirectory());
+                    localFilePath.mkdirs();
 
                     // create outputStream for file
-                    outStream = new FileOutputStream(filePath + File.separator + file.getName());
+                    outStream = new FileOutputStream(localFilePath + File.separator + file.getName());
 
                     // retrieve the files
                     client.retrieveFile(file.getName(), outStream);
@@ -499,7 +497,7 @@ public class MainController implements Initializable {
                     outStream.close();
 
                     // flag file as synced
-                    syncedFileLedger.add(fileOnServer);
+                    syncedFileLedger.add(remoteFilePath);
 
                 } // if
             } // if
