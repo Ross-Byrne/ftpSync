@@ -88,10 +88,6 @@ public class MainController implements Initializable {
         // set the tree root
         fileTreeView.setRoot(rootItem);
 
-        // set the login details to make testing faster
-        addressTF.setText("ftp.vaultfortress.net");
-        usernameTF.setText("ross@vaultfortress.net");
-
     } // initialize()
 
     // onClick method for login button
