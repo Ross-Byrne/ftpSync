@@ -1,6 +1,5 @@
 package application;
 
-import com.sun.org.apache.xpath.internal.operations.Bool;
 import javafx.application.Platform;
 import javafx.concurrent.Task;
 import javafx.fxml.FXML;
@@ -37,6 +36,7 @@ public class MainController implements Initializable {
 
     // variables
 
+    private Preferences prefs = new Preferences();
     private FTPClient client = new FTPClient();
     private InetAddress address;
     private DirectoryChooser directoryChooser = new DirectoryChooser();
@@ -382,7 +382,7 @@ public class MainController implements Initializable {
                 // add file to file tree
                 treeNode.getChildren().add(new TreeItem<>(file.getName() + " | " +
                         ft.format(file.getTimestamp().getTime()) + " | " +
-                        checkIfSynced(file.getName())));
+                        checkIfSynced(client.printWorkingDirectory() + File.separator + file.getName())));
 
             } // if
 
@@ -457,15 +457,23 @@ public class MainController implements Initializable {
                 daysOld = Duration.between(file.getTimestamp().toInstant(), Calendar.getInstance().toInstant()).toDays();
 
                 System.out.println("File is " + daysOld + " days old");
+                String fileOnServer = client.printWorkingDirectory() + File.separator + file.getName();
 
+                System.out.println("File on server: " + fileOnServer);
                 // if file is not older then limit and not already synced
-                if (daysOld < daysLimit && syncedFileLedger.contains(file.getName()) == false) {
+                if (daysOld < daysLimit && syncedFileLedger.contains(fileOnServer) == false) {
 
                     System.out.println("Downloading: " + file.getName());
                     Platform.runLater(() -> logTA.appendText("\nDownloading: " + file.getName()));
 
+                    // create the directory that the file will be places in on users pc
+                    File filePath = new File(outputDir.getAbsoluteFile() + client.printWorkingDirectory());
+                    filePath.mkdirs();
+
+                    System.out.println("Output file: " + filePath.getAbsolutePath());
+
                     // create outputStream for file
-                    outStream = new FileOutputStream(outputDir.getAbsoluteFile() + File.separator + file.getName());
+                    outStream = new FileOutputStream(filePath + File.separator + file.getName());
 
                     // retrieve the files
                     client.retrieveFile(file.getName(), outStream);
@@ -474,7 +482,7 @@ public class MainController implements Initializable {
                     outStream.close();
 
                     // flag file as synced
-                    syncedFileLedger.add(file.getName());
+                    syncedFileLedger.add(fileOnServer);
 
                 } // if
             } // if
