@@ -10,8 +10,9 @@ import java.util.*;
  */
 public class DataManager {
 
-    private final static String preferences_FileName = "program.prefs";
+    private final static String preferences_FileName = "program.properties";
     private final static String syncedFileLedger_FileName = "syncedFiles.dat";
+    private Properties properties = new Properties();
     private String serverAddress;
     private String username;
     private int fileAgeLimit;
@@ -37,6 +38,9 @@ public class DataManager {
             // load the set of synced files
             loadSyncedFileLedger();
 
+            // load the programs preferences
+            loadPreferences();
+
         } else {
 
             // make settings directory
@@ -50,13 +54,67 @@ public class DataManager {
     // loads the programs preferences
     public void loadPreferences(){
 
+        try {
+
+            System.out.println("Loading preferences.");
+
+            // load the properties
+
+            FileInputStream fis = new FileInputStream(settingsDir.getName() + File.separator + preferences_FileName);
+            properties.load(fis);
+
+            // load server address
+            setServerAddress(properties.getProperty("ServerAddress", ""));
+
+            // load username
+            setUsername(properties.getProperty("Username", ""));
+
+            // load file age limit
+            setFileAgeLimit(Integer.parseInt(properties.getProperty("FileAgeLimit", "6")));
+
+            fis.close();
+
+        }catch (FileNotFoundException fnf){
+
+            System.out.println("Preference file not found.");
+        }
+        catch(Exception e){
+
+            System.out.println("Error loading program preferences.");
+            e.printStackTrace();
+        } // try
 
     } // loadPreferences()
-
 
     // saves the programs preferences
     public void savePreferences(){
 
+        try {
+
+            System.out.println("Saving program preferences.");
+
+            FileOutputStream fos = new FileOutputStream(settingsDir.getName() + File.separator + preferences_FileName);
+
+            // save the address
+            properties.put("ServerAddress", getServerAddress());
+
+            // save the username
+            properties.put("Username", getUsername());
+
+            // save the file age limit
+            properties.put("FileAgeLimit", String.valueOf(getFileAgeLimit()));
+
+            // save the properties to the file
+            properties.store(fos, "Properties");
+
+            // close stream
+            fos.close();
+
+        }catch (Exception e){
+
+            System.out.println("Error saving program preferences.");
+            e.printStackTrace();
+        } // try
 
     } // savePreferences();
 

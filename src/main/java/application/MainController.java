@@ -46,7 +46,6 @@ public class MainController implements Initializable {
     private long daysLimit;
     private boolean outputDirSelected;
     private boolean isDownloadingFiles;
-
     private Image dirIcon = new Image(getClass().getResourceAsStream("/icons/directory_icon.png"));
 
 
@@ -85,6 +84,9 @@ public class MainController implements Initializable {
 
                     // save the file age limit
                     dataManager.setFileAgeLimit(Integer.parseInt(fileAgeLimitTF.getText()));
+
+                    // save preferences
+                    dataManager.savePreferences();
 
                 } catch (Exception e) {
 
@@ -305,6 +307,9 @@ public class MainController implements Initializable {
                     return;
                 } // if
 
+                // logged in successfully, save preferences
+                dataManager.savePreferences();
+
                 // enter passive mode
                 client.enterLocalPassiveMode();
 
@@ -407,7 +412,7 @@ public class MainController implements Initializable {
 
                 // create treeItem to represent new Directory
                 TreeItem newDir = new TreeItem<>(dir.getName(), new ImageView(dirIcon));
-                newDir.setExpanded(true);
+                newDir.setExpanded(false);
 
                 // add directory to file tree
                 treeNode.getChildren().add(newDir);
@@ -466,7 +471,6 @@ public class MainController implements Initializable {
                 System.out.println("File is " + daysOld + " days old");
                 String remoteFilePath = client.printWorkingDirectory() + File.separator + file.getName();
 
-                System.out.println("File on server: " + remoteFilePath);
                 // if file is not older then limit and not already synced
                 if (daysOld < daysLimit && dataManager.isFileSynced(remoteFilePath) == false) {
 
