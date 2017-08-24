@@ -43,7 +43,6 @@ public class MainController implements Initializable {
     private File outputDir;
     private OutputStream outStream;
     private SimpleDateFormat ft = new SimpleDateFormat ("HH:mm:ss MMM d");
-    private long defaultDaysLimit = 6;
     private long daysLimit;
     private boolean outputDirSelected;
     private boolean isDownloadingFiles;
@@ -57,8 +56,8 @@ public class MainController implements Initializable {
         directoryChooser.setTitle("Select Download Location");
 
         // set default age limit
-        fileAgeLimitTF.setText(String.valueOf(defaultDaysLimit));
-        daysLimit = defaultDaysLimit;
+        fileAgeLimitTF.setText(String.valueOf(dataManager.getFileAgeLimit()));
+        daysLimit = dataManager.getFileAgeLimit();
 
         // set up file tree
         TreeItem<String> rootItem = new TreeItem<> ("Root: /", new ImageView(dirIcon));
@@ -66,6 +65,10 @@ public class MainController implements Initializable {
 
         // set the tree root
         fileTreeView.setRoot(rootItem);
+
+        // fill in last used server address and username
+        addressTF.setText(dataManager.getServerAddress());
+        usernameTF.setText(dataManager.getUsername());
 
     } // initialize()
 
@@ -123,6 +126,10 @@ public class MainController implements Initializable {
             alert.showAndWait();
             return;
         }
+
+        // save the server address and username entered to the data manager
+        dataManager.setServerAddress(addressTF.getText());
+        dataManager.setUsername(usernameTF.getText());
 
         // try login, in a separate thread
         new Thread(new Task<Void>(){

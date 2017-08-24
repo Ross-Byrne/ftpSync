@@ -10,7 +10,7 @@ import java.util.*;
  */
 public class DataManager {
 
-    private final static String preference_FileName = "preferences.ini";
+    private final static String preferences_FileName = "program.prefs";
     private final static String syncedFileLedger_FileName = "syncedFiles.dat";
     private String serverAddress;
     private String username;
@@ -21,6 +21,11 @@ public class DataManager {
 
 
     public DataManager(){
+
+        // set default preferences
+        this.serverAddress = "";
+        this.username = "";
+        this.fileAgeLimit = 6;
 
         // make the settings directory
         settingsDir = new File("settings");
@@ -40,6 +45,7 @@ public class DataManager {
             System.out.println("Settings folder not found, recreating.");
         } // if
     } // constructor
+
 
     // loads the programs preferences
     public boolean loadPreferences(){
