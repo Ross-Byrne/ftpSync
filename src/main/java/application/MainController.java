@@ -335,6 +335,8 @@ public class MainController implements Initializable {
                 // enter passive mode
                 client.enterLocalPassiveMode();
 
+                client.setControlKeepAliveTimeout(300); // set timeout to 5 minutes
+
                 // logged in ok
                 Platform.runLater(() -> logTA.appendText("\n" + client.getReplyString()));
 
@@ -511,6 +513,8 @@ public class MainController implements Initializable {
 
         for (FTPFile file : files) {
 
+            int type = file.getType();
+
             if(!file.getName().startsWith(".")) {
 
                 // get the number of days old this file is
@@ -552,11 +556,15 @@ public class MainController implements Initializable {
                         }
                     };
 
+                    client.enterLocalPassiveMode();
+                    client.setFileType(FTPClient.BINARY_FILE_TYPE);
+
                     // retrieve the files
                     client.retrieveFile(file.getName(), cos);
 
                     // close the stream
                     cos.close();
+                    outStream.close();
 
                     // flag file as synced
                     dataManager.flagFileAsSynced(remoteFilePath);
