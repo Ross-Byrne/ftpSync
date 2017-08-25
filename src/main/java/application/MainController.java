@@ -502,7 +502,7 @@ public class MainController implements Initializable {
 
                     // save the log
                     StringBuilder sb = new StringBuilder();
-                    sb.append(logTA.getText());
+                    Platform.runLater(() -> sb.append(logTA.getText()));
 
                     // create the directory that the file will be places in on users pc
                     File localFilePath = new File(outputDir.getAbsoluteFile() + client.printWorkingDirectory());
@@ -516,12 +516,15 @@ public class MainController implements Initializable {
 
                     // wrap in counting out stream to track progress
                     CountingOutputStream cos = new CountingOutputStream(outStream){
+
+                        int lastValue = -1;
+
                         protected void beforeWrite(int n){
                             super.beforeWrite(n);
 
-                            displayDownloadProgress(sb.toString(), getCount(), size);
+                            Platform.runLater(() -> lastValue = displayDownloadProgress(sb.toString(), getCount(), size, lastValue));
 
-                            //System.err.println("Downloaded "+getCount() + "/" + size);
+                            //System.out.println("Downloaded " + (int)(((float)getCount() / (float) size) * 100) + "%");
                         }
                     };
 
@@ -561,11 +564,20 @@ public class MainController implements Initializable {
     } // syncFiles()
 
 
-    private void displayDownloadProgress(String log, long current, long total){
+    private int displayDownloadProgress(String log, long current, long total, int lastValue){
 
-        long percent = (total/current) * 100;
+        int percent = (int)(((float)current / (float)total) * 100);
 
-        Platform.runLater(() -> logTA.setText(log + "\n" + percent + "%"));
+        // don't update log until percent value has changed
+        if(percent == lastValue)
+            return percent;
+
+        logTA.setText(log + "\n" + percent + "%");
+        logTA.setScrollTop(Double.MAX_VALUE);
+
+        //System.out.println("Updated percent... " + percent + "%");
+
+        return percent;
 
     } // displayDownloadProgress()
 
