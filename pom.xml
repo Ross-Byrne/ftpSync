@@ -5,7 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>ftpSync</groupId>
     <artifactId>ftpSync</artifactId>
-    <version>1.0.1</version>
+    <version>1.1.0</version>
     <packaging>jar</packaging>
     <description>A simple ftp file syncing program. Syncs files newer than a selected number of days.</description>
 
@@ -83,13 +83,13 @@
                 <artifactId>javafx-maven-plugin</artifactId>
                 <version>8.8.3</version>
                 <configuration>
-                    <vendor>ftpSync</vendor>
+                    <vendor>Ftp Sync</vendor>
                     <nativeReleaseVersion>${project.version}</nativeReleaseVersion>
                     <mainClass>application.Main</mainClass>
                     <jfxMainAppJarName>ftpSync-${project.version}.jar</jfxMainAppJarName>
                     <needShortcut>true</needShortcut>
                     <needMenu>true</needMenu>
-                    <appName>ftpSync</appName>
+                    <appName>Ftp Sync</appName>
                 </configuration>
                 <executions>
                     <execution>
