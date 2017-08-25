@@ -8,6 +8,7 @@ import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.stage.DirectoryChooser;
+import org.apache.commons.io.output.CountingOutputStream;
 import org.apache.commons.net.ftp.FTPClient;
 import org.apache.commons.net.ftp.FTPFile;
 import org.apache.commons.net.ftp.FTPReply;
@@ -391,10 +392,9 @@ public class MainController implements Initializable {
             if(!file.getName().startsWith(".")) {
 
                 System.out.println("File: " + file.getName());
+
                 // add file to file tree
-                treeNode.getChildren().add(new TreeItem<>(file.getName() + " | " +
-                        ft.format(file.getTimestamp().getTime()) + " | " +
-                        checkIfSynced(client.printWorkingDirectory() + File.separator + file.getName())));
+                treeNode.getChildren().add(new TreeItem<>(getFileDisplayText(client, file)));
 
             } // if
 
@@ -433,15 +433,36 @@ public class MainController implements Initializable {
     } // buildFileTree()
 
 
-    // returns the string "Synced" if the file is synced
-    private String checkIfSynced(String remoteFilePath){
+    // creates the display text that is shown for a file
+    private String getFileDisplayText(FTPClient client, FTPFile file) throws Exception {
+
+        String name = file.getName() + " | " +
+                ft.format(file.getTimestamp().getTime()) + " | " +
+                fileSyncStatus(file, client.printWorkingDirectory() + File.separator + file.getName());
+
+        return name;
+
+    } // getFileDisplayText()
+
+
+    // returns the string with the files sync status eg. not synced etc.
+    private String fileSyncStatus(FTPFile file, String remoteFilePath){
 
         if(dataManager.isFileSynced(remoteFilePath))
             return "Synced";
+        else if(getFilesAgeInDays(file) >= dataManager.getFileAgeLimit())
+            return "Ignored";
         else
             return "Not Synced";
 
     } // checkIfSynced()
+
+
+    private long getFilesAgeInDays(FTPFile file){
+
+        // finds the difference, in days, between the files timestamp and the current time
+        return Duration.between(file.getTimestamp().toInstant(), Calendar.getInstance().toInstant()).toDays();
+    } // getFilesAgeInDays()
 
 
     // sync files, by download files that need to be downloaded
@@ -466,7 +487,7 @@ public class MainController implements Initializable {
             if(!file.getName().startsWith(".")) {
 
                 // get the number of days old this file is
-                daysOld = Duration.between(file.getTimestamp().toInstant(), Calendar.getInstance().toInstant()).toDays();
+                daysOld = getFilesAgeInDays(file);
 
                 System.out.println("File is " + daysOld + " days old");
                 String remoteFilePath = client.printWorkingDirectory() + File.separator + file.getName();
@@ -474,25 +495,47 @@ public class MainController implements Initializable {
                 // if file is not older then limit and not already synced
                 if (daysOld < daysLimit && dataManager.isFileSynced(remoteFilePath) == false) {
 
+                    long size;
+
                     System.out.println("Downloading: " + remoteFilePath);
                     Platform.runLater(() -> logTA.appendText("\nDownloading: " + remoteFilePath));
+
+                    // save the log
+                    StringBuilder sb = new StringBuilder();
+                    sb.append(logTA.getText());
 
                     // create the directory that the file will be places in on users pc
                     File localFilePath = new File(outputDir.getAbsoluteFile() + client.printWorkingDirectory());
                     localFilePath.mkdirs();
 
+                    // get the file size
+                    size = file.getSize();
+
                     // create outputStream for file
                     outStream = new FileOutputStream(localFilePath + File.separator + file.getName());
 
+                    // wrap in counting out stream to track progress
+                    CountingOutputStream cos = new CountingOutputStream(outStream){
+                        protected void beforeWrite(int n){
+                            super.beforeWrite(n);
+
+                            displayDownloadProgress(sb.toString(), getCount(), size);
+
+                            //System.err.println("Downloaded "+getCount() + "/" + size);
+                        }
+                    };
+
                     // retrieve the files
-                    client.retrieveFile(file.getName(), outStream);
+                    client.retrieveFile(file.getName(), cos);
 
                     // close the stream
-                    outStream.close();
+                    cos.close();
 
                     // flag file as synced
                     dataManager.flagFileAsSynced(remoteFilePath);
 
+                    // reset log
+                    logTA.setText(sb.toString());
                 } // if
             } // if
         } // for
@@ -516,5 +559,14 @@ public class MainController implements Initializable {
             } // if
         } // for
     } // syncFiles()
+
+
+    private void displayDownloadProgress(String log, long current, long total){
+
+        long percent = (total/current) * 100;
+
+        Platform.runLater(() -> logTA.setText(log + "\n" + percent + "%"));
+
+    } // displayDownloadProgress()
 
 } // class
