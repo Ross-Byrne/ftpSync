@@ -470,6 +470,7 @@ public class MainController implements Initializable {
 
         long daysOld;
         String pwd;
+        StringBuilder logSB = new StringBuilder();
 
         // display the files
         FTPFile[] files = client.listFiles("", FTPFile::isFile);
@@ -501,8 +502,7 @@ public class MainController implements Initializable {
                     Platform.runLater(() -> logTA.appendText("\nDownloading: " + remoteFilePath));
 
                     // save the log
-                    StringBuilder sb = new StringBuilder();
-                    Platform.runLater(() -> sb.append(logTA.getText()));
+                    Platform.runLater(() -> logSB.append(logTA.getText()));
 
                     // create the directory that the file will be places in on users pc
                     File localFilePath = new File(outputDir.getAbsoluteFile() + client.printWorkingDirectory());
@@ -522,9 +522,7 @@ public class MainController implements Initializable {
                         protected void beforeWrite(int n){
                             super.beforeWrite(n);
 
-                            Platform.runLater(() -> lastValue = displayDownloadProgress(sb.toString(), getCount(), size, lastValue));
-
-                            //System.out.println("Downloaded " + (int)(((float)getCount() / (float) size) * 100) + "%");
+                            Platform.runLater(() -> lastValue = displayDownloadProgress(logSB.toString(), getCount(), size, lastValue));
                         }
                     };
 
@@ -537,8 +535,10 @@ public class MainController implements Initializable {
                     // flag file as synced
                     dataManager.flagFileAsSynced(remoteFilePath);
 
-                    // reset log
-                    logTA.setText(sb.toString());
+                    // reset log to get rid of progress bar
+                    Platform.runLater(() -> logTA.setText(logSB.toString()));
+                    Platform.runLater(() -> logTA.setScrollTop(Double.MAX_VALUE)); // scrolls to bottom
+                    logSB.setLength(0); // clear string builder
                 } // if
             } // if
         } // for
@@ -566,16 +566,36 @@ public class MainController implements Initializable {
 
     private int displayDownloadProgress(String log, long current, long total, int lastValue){
 
+        StringBuilder progress = new StringBuilder();
         int percent = (int)(((float)current / (float)total) * 100);
+        float barSize = ((float)percent) / 2.0f;
 
         // don't update log until percent value has changed
         if(percent == lastValue)
             return percent;
 
-        logTA.setText(log + "\n" + percent + "%");
-        logTA.setScrollTop(Double.MAX_VALUE);
+        // this only runs every time the percent changes (only 100 times)
 
-        //System.out.println("Updated percent... " + percent + "%");
+        // start building the progress bar
+        progress.append("\n").append(percent).append("% [");
+
+        // loop 100 times to create a progress bar.
+        for(int i = 0; i < 50; i++){
+
+            barSize--;
+
+            if(barSize < 0)
+                progress.append("=");
+            else
+                progress.append("#");
+
+        } // for
+
+        progress.append("]");
+
+        logTA.setText(log + progress.toString());
+        logTA.setScrollTop(Double.MAX_VALUE);
+        progress.setLength(0);
 
         return percent;
 
