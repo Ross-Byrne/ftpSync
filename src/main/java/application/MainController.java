@@ -2,12 +2,14 @@ package application;
 
 import javafx.application.Platform;
 import javafx.concurrent.Task;
+import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.stage.DirectoryChooser;
+import javafx.stage.WindowEvent;
 import org.apache.commons.io.output.CountingOutputStream;
 import org.apache.commons.net.ftp.FTPClient;
 import org.apache.commons.net.ftp.FTPFile;
@@ -19,6 +21,10 @@ import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.time.Duration;
 import java.util.*;
+import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 public class MainController implements Initializable {
 
@@ -37,6 +43,7 @@ public class MainController implements Initializable {
 
     // variables
 
+    private ExecutorService executor = Executors.newFixedThreadPool(5);
     private DataManager dataManager = new DataManager();
     private FTPClient client = new FTPClient();
     private InetAddress address;
@@ -106,11 +113,39 @@ public class MainController implements Initializable {
 
     } // initialize()
 
+    public void shutdown(){
+
+        // disconnect from server
+        disconnectServer();
+
+        // shutdown any running threads
+        try {
+            executor.shutdown();
+            executor.awaitTermination(5, TimeUnit.SECONDS);
+        }
+        catch (InterruptedException e) {
+            //System.err.println("Threads interrupted");
+        }
+        finally {
+
+            // cancel any unfinished tasks
+            executor.shutdownNow();
+        } // try
+    } // shutdown
+
     // onClick method for login button
     @FXML void loginButtonClick_OnAction(){
 
         // clear message label
         logTA.setText("Logging in...");
+
+        if(isDownloadingFiles){
+
+            // show alert
+            Alert alert = new Alert(Alert.AlertType.ERROR, "Cannot login, file download in progress.");
+            alert.showAndWait();
+            return;
+        } // if
 
         // clear the file tree
 
@@ -166,15 +201,12 @@ public class MainController implements Initializable {
         dataManager.setUsername(usernameTF.getText());
 
         // try login, in a separate thread
-        new Thread(new Task<Void>(){
+        executor.submit(() -> {
 
-            protected Void call() throws Exception {
+            // connect to the server
+            connectToServer(addressTF.getText(), usernameTF.getText(), passwordPF.getText());
 
-                // connect to the server
-                connectToServer(addressTF.getText(), usernameTF.getText(), passwordPF.getText());
-                return null;
-            }
-        }).start();
+        });
 
     } // loginButtonClick()
 
@@ -201,8 +233,6 @@ public class MainController implements Initializable {
     // runs when the Sync Files button is pressed
     @FXML void syncFilesBT_OnAction(){
 
-        Task downloadTask;
-
         // check if logged in
         if(client.isConnected() == false) {
 
@@ -220,62 +250,53 @@ public class MainController implements Initializable {
         daysLimit = Long.parseLong(fileAgeLimitTF.getText());
 
         // download the files, in a separate thread
-        downloadTask = new Task<Boolean>(){
+        executor.submit(() -> {
 
-            protected Boolean call() throws Exception {
+            Platform.runLater(() -> logTA.appendText("\nStarting to download files . . ."));
 
-                Platform.runLater(() -> logTA.appendText("\nStarting to download files . . ."));
+            try {
 
-                try {
+                // sync the files
+                syncFiles(client);
 
-                    // sync the files
-                    syncFiles(client);
+                Platform.runLater(() ->{
 
-                    Platform.runLater(() ->{
+                    // update displayed files
+                    try {
 
-                        // update displayed files
-                        try {
+                        displayFileTree(client);
 
-                            displayFileTree(client);
+                    } catch (Exception e) {
 
-                        } catch (Exception e) {
-
-                            logTA.appendText("\nError updating file tree!");
-                            e.printStackTrace();
-                        } // try
-
-                        // disconnect from the server
-                        disconnectServer();
-
-                    });
-
-                } catch (Exception ex){
-
-                    Platform.runLater(() -> logTA.appendText("\nError Downloading files!"));
+                        logTA.appendText("\nError updating file tree!");
+                        e.printStackTrace();
+                    } // try
 
                     // disconnect from the server
                     disconnectServer();
+                });
 
-                    isDownloadingFiles = false;
+            } catch (Exception ex){
 
-                    ex.printStackTrace();
+                Platform.runLater(() -> logTA.appendText("\nError Downloading files!"));
+                System.out.println("Error downloading files.");
 
-                    return false;
-                } // try
-
-                Platform.runLater(() -> logTA.appendText("\nFinished downloading files."));
+                // disconnect from the server
+                disconnectServer();
 
                 isDownloadingFiles = false;
 
-                // save the set of synced files
-                dataManager.saveSyncedFileLedger();
+                //ex.printStackTrace();
 
-                return true;
-            } // call()
-        };
+            } // try
 
-        // start the thread
-        new Thread(downloadTask).start();
+            Platform.runLater(() -> logTA.appendText("\nFinished downloading files."));
+
+            isDownloadingFiles = false;
+
+            // save the set of synced files
+            dataManager.saveSyncedFileLedger();
+        });
 
     } // syncFilesBT_OnAction()
 
@@ -324,6 +345,8 @@ public class MainController implements Initializable {
 
                         displayFileTree(client);
 
+                        Platform.runLater(() -> logTA.appendText("\nRead to sync files."));
+
                     } catch (Exception e) {
 
                         logTA.appendText("\nError updating file tree!");
@@ -359,7 +382,7 @@ public class MainController implements Initializable {
 
         } catch (Exception e) {
 
-            //e.printStackTrace();
+            e.printStackTrace();
             Platform.runLater(() -> logTA.appendText("\nError Disconnecting."));
 
         } // try
@@ -370,7 +393,7 @@ public class MainController implements Initializable {
     private void displayFileTree(FTPClient client) throws Exception{
 
         // set up file tree
-        TreeItem<String> rootItem = new TreeItem<> ("Root: /", new ImageView(dirIcon));
+        TreeItem<String> rootItem = new TreeItem<>("Root: /", new ImageView(dirIcon));
         rootItem.setExpanded(true);
 
         // set the tree root
@@ -410,6 +433,9 @@ public class MainController implements Initializable {
                 // change working directory to detected directory
                 client.changeWorkingDirectory(dir.getName());
 
+                // save working dir
+                String pwd = client.printWorkingDirectory();
+
                 // create treeItem to represent new Directory
                 TreeItem newDir = new TreeItem<>(dir.getName(), new ImageView(dirIcon));
                 newDir.setExpanded(false);
@@ -417,8 +443,8 @@ public class MainController implements Initializable {
                 // add directory to file tree
                 treeNode.getChildren().add(newDir);
 
-                logTA.appendText("\nDiscovering Files in: " + client.printWorkingDirectory());
-                System.out.println("Discovering Files in: " + client.printWorkingDirectory());
+                Platform.runLater(() -> logTA.appendText("\nDiscovering Files in: " + pwd));
+                System.out.println("Discovering Files in: " + pwd);
 
                 // recursively call method to add files and directories to new directory
                 buildFileTree(newDir, client);
